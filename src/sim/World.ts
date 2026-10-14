@@ -206,6 +206,8 @@ export class World {
   convoyCd = 70;
   waitingFirstWave = true;
 
+  /** level number used for scaling formulas (endless mode uses a fixed tier) */
+  lvlN: number;
   private nextId = 1;
   private delayed: Delayed[] = [];
   private upg: (id: string) => number;
@@ -213,6 +215,7 @@ export class World {
 
   constructor(public level: LevelDef, public loadout: Loadout) {
     this.rng = new Rng(level.seed * 7919 + 13);
+    this.lvlN = level.id || 35;
     this.paths = level.paths.map((p) => new Path(p));
     this.slots = level.slots.map((s) => ({ x: s.x, z: s.z, price: s.price ?? 0, open: !s.price, tower: 0 }));
     this.upg = (id) => {
@@ -338,7 +341,7 @@ export class World {
     if (this.level.endless === undefined && this.wave >= this.level.waves.length) return 0;
     let bonus = 0;
     if (!this.waitingFirstWave && this.waveTimer > 0) {
-      bonus = Math.ceil(this.waveTimer * (1.5 + this.level.id * 0.04));
+      bonus = Math.ceil(this.waveTimer * (1.5 + this.lvlN * 0.04));
       this.gold += bonus;
     }
     this.waitingFirstWave = false;
@@ -413,7 +416,7 @@ export class World {
   claimConvoy(): number {
     if (!this.convoy || this.convoy.claimed) return 0;
     this.convoy.claimed = true;
-    const v = Math.round(160 + this.level.id * 12);
+    const v = Math.round(160 + this.lvlN * 12);
     this.gold += v;
     this.emit({ t: 'collect', x: this.convoy.x, z: this.convoy.z, value: v });
     this.convoy.life = Math.min(this.convoy.life, 0.6);
@@ -1322,7 +1325,7 @@ export class World {
       if (c.life <= 0) this.convoy = null;
       return;
     }
-    if (this.waitingFirstWave || this.level.id < 3) return;
+    if (this.waitingFirstWave || this.lvlN < 3) return;
     this.convoyCd -= dt;
     if (this.convoyCd <= 0) {
       this.convoyCd = this.rng.range(80, 120);

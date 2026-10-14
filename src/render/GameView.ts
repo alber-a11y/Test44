@@ -191,7 +191,7 @@ export class GameView {
 
     // ---- camera
     this.rig = new CameraRig(engine.camera);
-    this.rig.frame(level.width + 1, level.height + 1);
+    this.rig.frame(level.width + 1, level.height + 7);
     engine.camera.far = 220;
     engine.camera.updateProjectionMatrix();
     this.particles.setViewport(engine.renderer.domElement.height, engine.camera);

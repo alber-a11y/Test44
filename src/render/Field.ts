@@ -157,7 +157,10 @@ export class Field {
     else if (b === 'canyon' || b === 'ash') h = smooth(0.5, 5, out) * (6 + n * 6) + smooth(6, 20, out) * 6;
     else if (b === 'snow') h = smooth(0, 10, out) * (4 + n * 7) + Math.max(0, out - 10) * 0.6;
     else if (b === 'coast') {
-      if (x < -this.hw + 1) h = -smooth(0, 4, -this.hw + 1 - x) * 3.2;
+      if ((this.level as any).seaTop) {
+        if (z < -this.hh) h = -smooth(0, 5, -this.hh - z + (n - 0.5) * 3) * 3.2;
+        else h = smooth(0, 14, out) * (2 + n * 4);
+      } else if (x < -this.hw + 1) h = -smooth(0, 4, -this.hw + 1 - x) * 3.2;
       else h = smooth(0, 14, out) * (2 + n * 4);
     }
     // gentle undulation inside the field

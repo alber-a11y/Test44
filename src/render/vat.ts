@@ -334,14 +334,14 @@ export function makeVatMaterial(model: VatModel, opts: { emissiveTint?: boolean 
       );
     }
   };
-  mat.customProgramCacheKey = () => 'vat-' + model.key;
+  mat.customProgramCacheKey = () => 'vat' + (opts.emissiveTint ? 'e' : '');
   return mat;
 }
 
 export function makeVatDepthMaterial(model: VatModel) {
   const mat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
   mat.onBeforeCompile = (s) => patchVat(s, model, false);
-  mat.customProgramCacheKey = () => 'vatd-' + model.key;
+  mat.customProgramCacheKey = () => 'vatd';
   return mat;
 }
 

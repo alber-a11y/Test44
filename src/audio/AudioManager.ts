@@ -71,7 +71,7 @@ class AudioManager {
     if (pending) return pending;
     const p = fetch(BASE + name + '.mp3')
       .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
-      .then((ab) => new Promise<AudioBuffer>((res, rej) => this.ctx!.decodeAudioData(ab, res, rej)))
+      .then((ab) => this.ctx!.decodeAudioData(ab))
       .then((b) => { this.buffers.set(name, b); return b; })
       .catch(() => { this.buffers.set(name, null); return null; });
     this.loading.set(name, p);

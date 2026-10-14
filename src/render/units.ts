@@ -65,6 +65,16 @@ export const UNIT_SPECS: Record<string, CharDef | { procedural: 'elephant' | 'rh
 
 const cache = new Map<string, VatModel>();
 
+/** Lightweight single-pose bake used for UI portraits (not cached, caller disposes). */
+export function bakePortraitModel(key: string): VatModel {
+  const spec = UNIT_SPECS[key];
+  if ('procedural' in spec) return buildBeast(key + '_p', spec.procedural);
+  const first = spec.clips.idle ?? Object.values(spec.clips)[0];
+  return bakeCharacter({ key: key + '_p', ...spec, clips: { idle: { name: first.name, frames: 1, loop: true } } });
+}
+
+export function disposeVatModel(m: VatModel) { m.posTex.dispose(); m.nrmTex.dispose(); m.geometry.dispose(); }
+
 export function getUnitModel(key: string): VatModel {
   const hit = cache.get(key);
   if (hit) return hit;
