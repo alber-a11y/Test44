@@ -102,13 +102,13 @@ export class MenuScene {
       const x = rng.range(-50, 50), z = rng.range(-14, 50);
       const d = Math.hypot(x, z * 1.1);
       if (d < 20 || field.pathDist(x, z) < 2.5) continue;
-      batch.add(rng.pick(look.trees), x, field.height(x, z) - 0.1, z, rng.range(0, 6), KIT_SCALE * rng.range(1.3, 2), new THREE.Color(look.treeTint));
+      batch.add(rng.pick(look.trees), x, field.height(x, z) - 0.1, z, rng.range(0, 6), KIT_SCALE * rng.range(1.8, 2.8), new THREE.Color(look.treeTint));
       i++;
     }
     for (let i = 0; i < 26; i++) {
       const x = rng.range(-20, 20), z = rng.range(-14, 18);
       if (Math.hypot(x, z) < R + 5 || field.pathDist(x, z) < 2 || occupied.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < (o.r + 1) ** 2)) continue;
-      batch.add(rng.pick(['tree_a', 'tree_b']), x, field.height(x, z), z, rng.range(0, 6), KIT_SCALE * rng.range(1.3, 1.7), new THREE.Color(look.treeTint));
+      batch.add(rng.pick(['pine0', 'pine1', 'pine2', 'bush0']), x, field.height(x, z), z, rng.range(0, 6), KIT_SCALE * rng.range(1.6, 2.2), new THREE.Color(look.treeTint));
       occupied.push({ x, z, r: 1 });
     }
     scene.add(batch.build());

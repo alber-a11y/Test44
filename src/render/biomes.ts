@@ -35,25 +35,25 @@ export const BIOMES: Record<BiomeId, BiomeLook> = {
   meadow: {
     grassA: 0x4a8726, grassB: 0x78aa35, grassDry: 0xb0a64e, dirt: 0xc9a46a, dirtDark: 0x9b7a4a, rock: 0xb3a597, rockDark: 0x7b6e63, moss: 0x7d9a3a,
     sky: 0xbfd9e8, fog: 0xcfe0d8, fogNear: 60, fogFar: 150, sun: 0xfff1d6, sunIntensity: 3.2, hemiSky: 0xd8ecff, hemiGround: 0x6b7a3a, hemiIntensity: 1.25,
-    bladeTip: 0x98c444, bladeRoot: 0x356b1d, flowers: [0xffffff, 0xfff27a, 0xf6f0ff], trees: ['tree_a', 'tree_b', 'trees_a_l', 'trees_a_m', 'trees_b_l', 'trees_b_m'], treeTint: 0x9fb88a,
+    bladeTip: 0x98c444, bladeRoot: 0x356b1d, flowers: [0xffffff, 0xfff27a, 0xf6f0ff], trees: ['pine0', 'pine1', 'pine2', 'pine3', 'pine1', 'bush0'], treeTint: 0xffffff,
     border: 'forest', particles: 'pollen',
   },
   canyon: {
     grassA: 0x6e9a34, grassB: 0x9cb948, grassDry: 0xc3b465, dirt: 0xd2ab73, dirtDark: 0xa27f52, rock: 0xc9b39a, rockDark: 0x8d7563, moss: 0x86a03e,
     sky: 0xd5e2ea, fog: 0xe3dccd, fogNear: 60, fogFar: 150, sun: 0xffe7c4, sunIntensity: 3.4, hemiSky: 0xe8f0ff, hemiGround: 0x7d6a48, hemiIntensity: 1.2,
-    bladeTip: 0xb4d257, bladeRoot: 0x4c7d26, flowers: [0xffffff, 0xffe066], trees: ['tree_a', 'tree_b', 'trees_b_m', 'trees_a_s'], treeTint: 0xa8bb8c,
+    bladeTip: 0xb4d257, bladeRoot: 0x4c7d26, flowers: [0xffffff, 0xffe066], trees: ['pine0', 'pine2', 'pine3', 'bush1'], treeTint: 0xf0ecd8,
     border: 'canyon', particles: 'pollen',
   },
   coast: {
     grassA: 0x5aa03a, grassB: 0x88c24a, grassDry: 0xc8c37a, dirt: 0xdcc08a, dirtDark: 0xab9363, rock: 0xb8b2a8, rockDark: 0x7c7770, moss: 0x7aa54a,
     sky: 0xc4e3f2, fog: 0xd4e8ee, fogNear: 60, fogFar: 160, sun: 0xfff5e0, sunIntensity: 3.3, hemiSky: 0xd6f0ff, hemiGround: 0x5f8a4a, hemiIntensity: 1.3,
-    bladeTip: 0xa6d65a, bladeRoot: 0x3c7f2a, flowers: [0xffffff, 0xffd3e8, 0xfff27a], trees: ['tree_a', 'trees_a_m', 'trees_b_s', 'tree_b'], treeTint: 0xa6c290,
+    bladeTip: 0xa6d65a, bladeRoot: 0x3c7f2a, flowers: [0xffffff, 0xffd3e8, 0xfff27a], trees: ['pine1', 'pine2', 'bush0', 'bush2', 'pine0'], treeTint: 0xffffff,
     border: 'coast', water: 0x2f9fb8, particles: 'pollen',
   },
   snow: {
     grassA: 0xdfe8ee, grassB: 0xf4f8fb, grassDry: 0xc9d5dc, dirt: 0x9f907e, dirtDark: 0x75695d, rock: 0x9aa2aa, rockDark: 0x667079, moss: 0xd8e2ea,
     sky: 0xc8d8e6, fog: 0xdbe6ef, fogNear: 45, fogFar: 130, sun: 0xfff7ee, sunIntensity: 2.9, hemiSky: 0xe8f2ff, hemiGround: 0x9aa6b4, hemiIntensity: 1.45,
-    bladeTip: 0xc6d6c0, bladeRoot: 0x7f9a7a, flowers: [0xffffff], trees: ['tree_a', 'tree_b', 'trees_a_m', 'trees_b_m'], treeTint: 0xd8e6ee,
+    bladeTip: 0xc6d6c0, bladeRoot: 0x7f9a7a, flowers: [0xffffff], trees: ['spine0', 'spine1', 'spine2', 'spine3'], treeTint: 0xffffff,
     border: 'snow', snow: true, particles: 'snow',
   },
   ashlands: {

@@ -261,3 +261,73 @@ export function makeGoldCart(): THREE.Group {
   g.add(gold);
   return g;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Procedural vegetation (closer to the reference art than the kit's cone trees)
+
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+/** Layered pine tree, ~1 unit tall at scale 1, vertex coloured. */
+export function makePineGeometry(variant: number, snow = false): THREE.BufferGeometry {
+  const r = seeded(variant * 7919 + 17);
+  const parts: THREE.BufferGeometry[] = [];
+  const trunkH = 0.18 + r() * 0.06;
+  parts.push(paint(new THREE.CylinderGeometry(0.035, 0.055, trunkH + 0.1, 6), 0x5a3a22, T(0, trunkH / 2, 0)));
+  const layers = 4 + Math.floor(r() * 2);
+  const dark = new THREE.Color(0x1f4a2a), light = new THREE.Color(0x4f8a3a), tip = new THREE.Color(0x7aa84a);
+  const snowC = new THREE.Color(0xf4f8fb);
+  for (let i = 0; i < layers; i++) {
+    const k = i / (layers - 1);
+    const radius = (0.36 - k * 0.26) * (0.9 + r() * 0.2);
+    const h = 0.32 - k * 0.1;
+    const y = trunkH + k * 0.72;
+    const g = new THREE.ConeGeometry(radius, h, 9, 2, true);
+    g.translate(0, y + h / 2, 0);
+    const geo = g.toNonIndexed();
+    for (const k2 of Object.keys(geo.attributes)) if (!['position', 'normal'].includes(k2)) geo.deleteAttribute(k2);
+    const pos = geo.getAttribute('position');
+    const cols = new Float32Array(pos.count * 3);
+    const c = new THREE.Color();
+    for (let v = 0; v < pos.count; v++) {
+      const vx = pos.getX(v), vy = pos.getY(v), vz = pos.getZ(v);
+      const rel = (vy - y) / h; // 0 bottom rim .. 1 apex
+      // droop the rim and jitter for a ragged silhouette
+      if (rel < 0.05) {
+        const a = Math.atan2(vz, vx);
+        const j = 0.85 + 0.3 * Math.abs(Math.sin(a * 4.5 + variant + i));
+        pos.setXYZ(v, vx * j, vy - 0.04 * j, vz * j);
+      }
+      c.copy(dark).lerp(light, Math.min(1, rel * 1.2)).lerp(tip, Math.max(0, rel - 0.7) * 1.5);
+      c.multiplyScalar(0.85 + r() * 0.25);
+      if (snow && rel > 0.35) c.lerp(snowC, 0.85);
+      cols[v * 3] = c.r; cols[v * 3 + 1] = c.g; cols[v * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    geo.computeVertexNormals();
+    // bias normals upward so the canopy catches light softly
+    const nrm = geo.getAttribute('normal');
+    for (let v = 0; v < nrm.count; v++) {
+      const n = new THREE.Vector3(nrm.getX(v), nrm.getY(v) + 0.6, nrm.getZ(v)).normalize();
+      nrm.setXYZ(v, n.x, n.y, n.z);
+    }
+    parts.push(geo);
+  }
+  return mergeGeometries(parts);
+}
+
+export function makeBushGeometry(variant: number): THREE.BufferGeometry {
+  const r = seeded(variant * 104729 + 3);
+  const parts: THREE.BufferGeometry[] = [];
+  const n = 3 + Math.floor(r() * 3);
+  for (let i = 0; i < n; i++) {
+    const g = new THREE.IcosahedronGeometry(0.16 + r() * 0.1, 1);
+    const a = r() * Math.PI * 2, d = r() * 0.16;
+    parts.push(paint(g, [0x3f6f2a, 0x4f7f30, 0x5a8a36][Math.floor(r() * 3)], T(Math.cos(a) * d, 0.12 + r() * 0.08, Math.sin(a) * d)));
+  }
+  return mergeGeometries(parts);
+}
+
+export const foliageMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, side: THREE.DoubleSide });

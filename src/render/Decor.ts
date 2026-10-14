@@ -3,6 +3,7 @@ import { Assets } from './Assets';
 import { Field, PATH_HALF } from './Field';
 import { Rng } from '../sim/rng';
 import { fbm } from './glsl';
+import { makePineGeometry, makeBushGeometry, foliageMaterial } from './props';
 
 export const KIT_SCALE = 2;
 
@@ -19,8 +20,9 @@ export class KitBatch {
   build(castShadow = true): THREE.Group {
     const g = new THREE.Group();
     for (const [key, list] of this.items) {
-      const geo = Assets.geometry(key);
-      const im = new THREE.InstancedMesh(geo, Assets.kitMaterial, list.length);
+      const custom = customGeometry(key);
+      const geo = custom ?? Assets.geometry(key);
+      const im = new THREE.InstancedMesh(geo, custom ? foliageMaterial : Assets.kitMaterial, list.length);
       const white = new THREE.Color(1, 1, 1);
       list.forEach((it, i) => { im.setMatrixAt(i, it.m); im.setColorAt(i, it.c ?? white); });
       im.castShadow = castShadow;
@@ -30,6 +32,19 @@ export class KitBatch {
     }
     return g;
   }
+}
+
+const customCache = new Map<string, THREE.BufferGeometry>();
+/** Procedural foliage keys: pine0..3, spine0..3 (snowy), bush0..2 */
+function customGeometry(key: string): THREE.BufferGeometry | null {
+  if (!/^(pine|spine|bush)\d$/.test(key)) return null;
+  let g = customCache.get(key);
+  if (!g) {
+    const v = +key.slice(-1);
+    g = key.startsWith('bush') ? makeBushGeometry(v) : makePineGeometry(v, key.startsWith('spine'));
+    customCache.set(key, g);
+  }
+  return g;
 }
 
 export function buildDecor(field: Field, occupied: { x: number; z: number; r: number }[]) {
@@ -101,7 +116,7 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
   for (let i = 0, tries = 0; i < inside && tries < 800; tries++) {
     const x = rng.range(-field.hw + 1, field.hw - 1), z = rng.range(-field.hh + 1, field.hh - 1);
     if (field.pathDist(x, z) < PATH_HALF + 2.2 || !isFree(x, z, 1.1)) continue;
-    batch.add(rng.pick(['tree_a', 'tree_b', ...treeKeys.slice(0, 2)]), x, field.height(x, z), z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.1, 1.6), tint);
+    batch.add(rng.pick(treeKeys), x, field.height(x, z), z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.3, 2.0) * (treeKeys[0].includes('pine') ? 1.15 : 1), tint);
     take(x, z, 1.1);
     i++;
   }
@@ -116,7 +131,7 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
     if (field.pathDist(x, z) < PATH_HALF + 1.5 || !isFree(x, z, 1.2)) continue;
     const y = field.height(x, z);
     const key = rng.pick(treeKeys);
-    batch.add(key, x, y - 0.1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.2, 1.9) * (key.startsWith('trees') ? 1.1 : 1.25), tint);
+    batch.add(key, x, y - 0.1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.4, 2.4) * (key.includes('pine') ? 1.3 : key.startsWith('bush') ? 1.6 : 1.25), tint);
     take(x, z, 1.2);
     i++;
   }
