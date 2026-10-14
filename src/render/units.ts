@@ -106,8 +106,8 @@ function buildBeast(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatMod
   const parts: Part[] = [];
   const isRhino = kind === 'rhino';
   const isMammoth = kind === 'mammoth';
-  const skin = isRhino ? 0x8f8478 : isMammoth ? 0x6b4a32 : 0x8c8a8a;
-  const skinDark = isRhino ? 0x6f665c : isMammoth ? 0x4f3524 : 0x6e6c6e;
+  const skin = isRhino ? 0x7d7368 : isMammoth ? 0x6b4a32 : 0x6e6a6c;
+  const skinDark = isRhino ? 0x5f574e : isMammoth ? 0x4f3524 : 0x55514f;
   const cloth = 0xb3242a, clothTrim = 0xe0b24a, wood = 0x7a5232, metal = 0xa9adb3, ivory = 0xf1e8d4;
 
   const L = isRhino ? 1.0 : 1.2; // body half length
@@ -228,7 +228,7 @@ function buildBeast(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatMod
       add(new THREE.BoxGeometry(0.95, 0.5, 0.95), wood, T(0, backY + 0.3, -0.15));
       add(new THREE.BoxGeometry(1.05, 0.08, 1.05), clothTrim, T(0, backY + 0.56, -0.15));
       for (const [x, z] of [[-0.45, -0.6], [0.45, -0.6], [-0.45, 0.3], [0.45, 0.3]]) add(new THREE.CylinderGeometry(0.04, 0.04, 0.7, 5), wood, T(x, backY + 0.85, z));
-      add(new THREE.ConeGeometry(0.85, 0.5, 4), cloth, mul(T(0, backY + 1.4, -0.15), RY(Math.PI / 4)));
+      add(new THREE.ConeGeometry(0.7, 0.38, 4), cloth, mul(T(0, backY + 1.36, -0.15), RY(Math.PI / 4)));
       // head armour
       add(new THREE.SphereGeometry(1, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), metal, mul(S(0.5, 0.35, 0.5), T(0, 0.6, 0.15)), headAnim);
     } else {

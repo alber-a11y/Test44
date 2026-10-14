@@ -7,6 +7,7 @@ import { buildGrass, type GrassLayer } from './Grass';
 import { buildRidges } from './Ridges';
 import { buildDecor, KIT_SCALE } from './Decor';
 import { Particles } from './Particles';
+import { NOISE_GLSL } from './glsl';
 import { CameraRig } from './CameraRig';
 import { VatCrowd } from './vat';
 import { CHAR_SCALE, getUnitModel, UNIT_SPECS } from './units';
@@ -191,7 +192,7 @@ export class GameView {
 
     // ---- camera
     this.rig = new CameraRig(engine.camera);
-    this.rig.frame(level.width + 1, level.height + 7);
+    this.rig.frame(level.width + 1, level.height + 5);
     engine.camera.far = 220;
     engine.camera.updateProjectionMatrix();
     this.particles.setViewport(engine.renderer.domElement.height, engine.camera);
@@ -218,18 +219,33 @@ export class GameView {
   private buildWater(color: number) {
     const geo = new THREE.PlaneGeometry(200, 300, 1, 1);
     geo.rotateX(-Math.PI / 2);
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.88 });
-    const u = { uTime: this.terrainUniforms.uTime };
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.08, metalness: 0.15, transparent: true, opacity: 0.92 });
+    const shore = -this.field.hw + 0.5;
     mat.onBeforeCompile = (s) => {
-      s.uniforms.uTime = u.uTime;
+      s.uniforms.uTime = this.terrainUniforms.uTime;
+      s.uniforms.uShore = { value: shore };
       s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = (modelMatrix * vec4(position,1.0)).xyz;');
-      s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; uniform float uTime;')
-        .replace('#include <map_fragment>', `float w = sin(vWP.x * 1.3 + uTime * 1.2) * sin(vWP.z * 1.1 - uTime * 0.9);
-          float foam = smoothstep(0.82, 1.0, w) * 0.5;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.95, 1.0), foam);`);
+      s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; uniform float uTime; uniform float uShore;\n' + NOISE_GLSL)
+        .replace('#include <map_fragment>', `
+          vec2 p = vWP.xz;
+          float n = fbm(p * 0.18 + vec2(uTime * 0.05, uTime * 0.03));
+          float n2 = fbm(p * 0.6 - vec2(uTime * 0.08, 0.0));
+          float depth = clamp((uShore - vWP.x) / 18.0, 0.0, 1.0);
+          vec3 shallow = vec3(0.18, 0.62, 0.66), deep = diffuseColor.rgb * 0.6;
+          diffuseColor.rgb = mix(shallow, deep, smoothstep(0.0, 0.6, depth)) * (0.9 + 0.2 * n);
+          float shoreD = uShore - vWP.x;
+          float foam = smoothstep(0.9, 0.0, shoreD + (n2 - 0.5) * 0.8) * 0.8 + smoothstep(0.06, 0.0, abs(fract(shoreD * 0.35 - uTime * 0.15) - 0.5) - 0.44 + n2 * 0.1) * smoothstep(4.0, 1.0, shoreD) * 0.3;
+          float glint = smoothstep(0.72, 0.8, n2) * 0.25;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 1.0, 1.0), clamp(foam + glint, 0.0, 1.0));`)
+        .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+          float e = 0.15;
+          float hC = fbm(vWP.xz * 0.5 + uTime * 0.1);
+          float hX = fbm((vWP.xz + vec2(e, 0.0)) * 0.5 + uTime * 0.1);
+          float hZ = fbm((vWP.xz + vec2(0.0, e)) * 0.5 + uTime * 0.1);
+          normal = normalize(normal + (viewMatrix * vec4((hC - hX) * 2.5, 0.0, (hC - hZ) * 2.5, 0.0)).xyz);`);
     };
     const m = new THREE.Mesh(geo, mat);
-    m.position.set(-100 - this.field.hw + 0.5, -0.55, 0);
+    m.position.set(-100 - this.field.hw + 0.5, -0.45, 0);
     m.receiveShadow = true;
     return m;
   }

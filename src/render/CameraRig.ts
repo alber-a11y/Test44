@@ -7,6 +7,8 @@ export class CameraRig {
   minDist = 14;
   maxDist = 60;
   pitch = THREE.MathUtils.degToRad(56);
+  /** 0 = looking north (portrait); -PI/2 = looking east (landscape, long map axis horizontal) */
+  yaw = 0;
   private goal = new THREE.Vector2();
   private goalDist = 40;
   private shakeT = 0;
@@ -36,6 +38,7 @@ export class CameraRig {
   }
 
   frame(w: number, h: number) {
+    this.autoYaw();
     this.bounds = { w, h };
     const full = this.fitDistance(w, h);
     // allow seeing the whole level, but default to a slightly closer view on tall screens
@@ -49,6 +52,7 @@ export class CameraRig {
 
   /** Re-fit after a resize, keeping relative zoom. */
   refit() {
+    this.autoYaw();
     const rel = (this.goalDist - this.minDist) / Math.max(1e-3, this.maxDist - this.minDist);
     const full = this.fitDistance(this.bounds.w, this.bounds.h);
     this.maxDist = full;
@@ -59,11 +63,30 @@ export class CameraRig {
   }
 
   private place(cam: THREE.PerspectiveCamera, tx: number, tz: number, d: number) {
-    cam.position.set(tx, Math.sin(this.pitch) * d, tz + Math.cos(this.pitch) * d);
+    const hd = Math.cos(this.pitch) * d;
+    cam.position.set(tx + Math.sin(this.yaw) * hd, Math.sin(this.pitch) * d, tz + Math.cos(this.yaw) * hd);
     cam.lookAt(tx, 0, tz);
   }
 
+  /** Choose orientation from the viewport aspect. Returns true if it changed. */
+  autoYaw(): boolean {
+    const want = innerWidth > innerHeight * 1.1 ? -Math.PI / 2 : 0;
+    if (want === this.yaw) return false;
+    this.yaw = want;
+    return true;
+  }
+
   pan(dx: number, dz: number) { this.goal.x += dx; this.goal.y += dz; this.clampGoal(); }
+
+  /** Pan by a screen-space drag (pixels). */
+  panScreen(dxPx: number, dyPx: number) {
+    const cam = this.camera;
+    const k = (2 * Math.tan((cam.fov * Math.PI) / 360) * this.dist) / innerHeight;
+    const rx = Math.cos(this.yaw), rz = -Math.sin(this.yaw);
+    const ux = -Math.sin(this.yaw), uz = -Math.cos(this.yaw);
+    const a = -dxPx * k, b = (dyPx * k) / Math.sin(this.pitch);
+    this.pan(rx * a + ux * b, rz * a + uz * b);
+  }
   zoom(factor: number, focus?: THREE.Vector2) {
     const before = this.goalDist;
     this.goalDist = THREE.MathUtils.clamp(this.goalDist * factor, this.minDist, this.maxDist);

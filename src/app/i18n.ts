@@ -11,7 +11,7 @@ const ru: Dict = {
   watch_ad: 'Смотреть', ad_x2: 'x2 за рекламу', ad_x3: 'x3 за рекламу', ad_label: 'РЕКЛАМА', ad_fullscreen: 'Полноэкранная реклама', ad_rewarded: 'Реклама за награду', ad_stub_note: 'Заглушка: здесь будет реклама площадки', ad_reward_ok: 'Награда получена!', ad_skip: 'Закрыть без награды',
   ad_unavailable: 'Реклама сейчас недоступна. Попробуйте позже.',
   // battle
-  wave: 'Волна', wave_n: 'Волна {n}', wave_of: 'Волна {n}/{m}', call_wave: 'Вызвать волну', call_bonus: '+{n}', first_wave: 'Начать!', lives: 'Жизни', gold: 'Золото',
+  wave: 'Волна', waves_count: 'Волн: {n}', wave_n: 'Волна {n}', wave_of: 'Волна {n}/{m}', call_wave: 'Вызвать волну', call_bonus: '+{n}', first_wave: 'Начать!', lives: 'Жизни', gold: 'Золото',
   pause: 'Пауза', resume: 'Продолжить', restart: 'Заново', exit: 'Выйти', speed: 'Скорость',
   victory: 'Победа!', defeat: 'Поражение', reward: 'Награда', kills: 'Побеждено врагов', revive: 'Второй шанс', revive_desc: '+10 жизней и продолжить бой', next_level: 'Дальше', to_map: 'На карту', retry: 'Ещё раз',
   boss_incoming: 'БОСС!', sell: 'Продать', upgrade: 'Улучшить', rally: 'Сбор', not_enough: 'Не хватает золота', choose_spec: 'Специализация',
@@ -72,7 +72,7 @@ const en: Dict = {
   coins: 'Coins', stars: 'Stars', free: 'Free', buy: 'Buy', owned: 'Owned', equip: 'Select', equipped: 'Selected', locked: 'Locked', max: 'MAX',
   watch_ad: 'Watch', ad_x2: 'x2 for an ad', ad_x3: 'x3 for an ad', ad_label: 'AD', ad_fullscreen: 'Fullscreen ad', ad_rewarded: 'Rewarded ad', ad_stub_note: 'Placeholder: the ad network will show here', ad_reward_ok: 'Reward granted!', ad_skip: 'Close without reward',
   ad_unavailable: 'Ad is not available right now. Try again later.',
-  wave: 'Wave', wave_n: 'Wave {n}', wave_of: 'Wave {n}/{m}', call_wave: 'Call wave', call_bonus: '+{n}', first_wave: 'Start!', lives: 'Lives', gold: 'Gold',
+  wave: 'Wave', waves_count: 'Waves: {n}', wave_n: 'Wave {n}', wave_of: 'Wave {n}/{m}', call_wave: 'Call wave', call_bonus: '+{n}', first_wave: 'Start!', lives: 'Lives', gold: 'Gold',
   pause: 'Paused', resume: 'Resume', restart: 'Restart', exit: 'Exit', speed: 'Speed',
   victory: 'Victory!', defeat: 'Defeat', reward: 'Reward', kills: 'Enemies defeated', revive: 'Second chance', revive_desc: '+10 lives and keep fighting', next_level: 'Next', to_map: 'Map', retry: 'Retry',
   boss_incoming: 'BOSS!', sell: 'Sell', upgrade: 'Upgrade', rally: 'Rally', not_enough: 'Not enough gold', choose_spec: 'Specialization',

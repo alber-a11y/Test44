@@ -160,10 +160,7 @@ export class GameSession {
   // Input
 
   private panScreen(dx: number, dy: number) {
-    const cam = this.engine.camera;
-    // world units per pixel at the target distance
-    const k = (2 * Math.tan((cam.fov * Math.PI) / 360) * this.view.rig.dist) / innerHeight;
-    this.view.rig.pan(-dx * k, -dy * k / Math.sin(this.view.rig.pitch));
+    this.view.rig.panScreen(dx, dy);
     if (selection.value) this.closeMenus();
   }
 

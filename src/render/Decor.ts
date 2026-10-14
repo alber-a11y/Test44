@@ -140,8 +140,8 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
       const a = rng.range(0, Math.PI * 2);
       const r = Math.max(field.hw, field.hh) + rng.range(14, 26);
       const x = Math.cos(a) * r * 0.8, z = Math.sin(a) * r;
-      if (z > field.hh + 8) continue; // keep the camera side open
-      batch.add(look.border === 'snow' ? 'mountain_a_bare' : rng.pick(['mountain_a', 'mountain_b', 'mountain_c']), x, field.height(x, z) - 1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(4, 7), look.snow ? new THREE.Color(0xe8eef4) : undefined);
+      if (z > field.hh + 8 || x < -field.hw - 8) continue; // keep both camera sides open
+      batch.add(look.border === 'snow' ? 'mountain_a_bare' : rng.pick(['mountain_a', 'mountain_b', 'mountain_c']), x, field.height(x, z) - 1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(4, 7), look.snow ? new THREE.Color(0xe8eef4) : new THREE.Color(look.border === 'ash' ? 0x8a7a70 : 0xc4c0a8));
     }
   }
 

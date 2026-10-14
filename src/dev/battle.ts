@@ -25,6 +25,11 @@ export async function runBattleDev() {
   session.callWave();
   const skip = +(params.get('t') ?? 12);
   for (let i = 0; i < skip * 60; i++) { w.step(1 / 60); if (i % 600 === 0 && !w.waveSpawning) w.startNextWave(); }
+  if (params.get('spawn')) {
+    const ids = params.get('spawn')!.split(',');
+    ids.forEach((id, i) => { for (let k = 0; k < 3; k++) w.spawnEnemy(id, 0, (k - 1) * 0.6, 0, w.paths[0].length * 0.35 + i * 3 + k * 1.2); });
+    for (let i = 0; i < 20; i++) w.step(1 / 60);
+  }
   w.events.length = 0;
   engine.start();
   (window as any).session = session;

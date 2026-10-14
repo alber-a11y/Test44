@@ -88,7 +88,7 @@ function PreLevel({ level }: { level: number }) {
       {level === 0 ? <p class="mid-t">{t('endless_desc', { n: p.endlessBest })}</p> : (
         <div class="row" style={{ marginBottom: 'calc(var(--u) * 1)' }}><Stars n={p.stars[level] ?? 0} size={34} /></div>
       )}
-      <div class="small-t muted">{t('biome_' + def.biome)} · {def.endless ? '∞' : def.waves.length} {t('wave').toLowerCase()}</div>
+      <div class="small-t muted">{t('biome_' + def.biome)} · {t('waves_count', { n: def.endless ? '∞' : def.waves.length })}</div>
       <div class="row" style={{ margin: 'calc(var(--u) * 2) 0', gap: 'calc(var(--u) * 1)' }}>
         {enemies.map((id) => (
           <div key={id} title={t('e_' + id)} style={{ width: 'calc(var(--u) * 11)', height: 'calc(var(--u) * 11)', borderRadius: '50%', background: ENEMIES[id].boss ? 'radial-gradient(#ff8a7a,#6e0f0a)' : 'radial-gradient(#6a5a80,#2b2338)', border: '3px solid #1a1222', overflow: 'hidden' }}>

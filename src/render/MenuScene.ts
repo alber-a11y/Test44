@@ -146,7 +146,7 @@ export class MenuScene {
     const cam = this.engine.camera;
     const portrait = innerHeight > innerWidth;
     const a = Math.sin(this.time * 0.05) * 0.35;
-    const dist = portrait ? 64 : 42;
+    const dist = portrait ? 64 : 58;
     cam.position.set(Math.sin(a) * dist * 0.55, dist * 0.82, Math.cos(a) * dist * 0.62 + 4);
     cam.lookAt(0, 0, portrait ? 2 : 0);
     for (const c of this.crowds) c.begin();
