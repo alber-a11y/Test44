@@ -7,6 +7,8 @@ import { hud, selection, targeting, tipQueue, bossBanner, waveBanner, type HudSn
 import { Audio, type SfxName } from '../audio/AudioManager';
 import { SPELLS, CONSUMABLE_ORDER, CONSUMABLES } from '../data/items';
 import { HEROES } from '../data/heroes';
+import { profile } from '../app/save';
+import { Platform } from '../platform/Platform';
 
 const STEP = 1 / 60;
 
@@ -115,7 +117,7 @@ export class GameSession {
       case 'freeze': sfx('freeze', 0.9); break;
       case 'meteor': sfx('meteor', 0.9); break;
       case 'star': sfx('stars', 0.4); break;
-      case 'leak': sfx('leak', 0.9); this.view.rig.shake(0.15); break;
+      case 'leak': sfx('leak', 0.9); this.view.rig.shake(0.15); this.vibrate(60); break;
       case 'waveStart':
         sfx('horn', 0.8);
         waveBanner.value = e.wave;
@@ -124,6 +126,7 @@ export class GameSession {
         if (e.boss && !this.bossAnnounced) {
           this.bossAnnounced = true;
           bossBanner.value = e.enemy;
+          this.vibrate(200);
           sfx('boss', 1);
           Audio.playMusic('boss');
           setTimeout(() => (bossBanner.value = null), 3500);
@@ -145,6 +148,8 @@ export class GameSession {
         break;
     }
   }
+
+  vibrate(ms: number) { if (profile.value.settings.vibration) Platform.vibrate(ms); }
 
   /** Resume after a "second chance". */
   revive() {
@@ -353,6 +358,7 @@ export class GameSession {
 
   dispose() {
     this.offUpdate();
+    this.engine.onResize = undefined;
     this.input.dispose();
     this.view.dispose();
     hud.value = null;

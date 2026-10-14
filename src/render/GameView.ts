@@ -617,9 +617,28 @@ export class GameView {
 
   dispose() {
     for (const t of this.texts) t.el.remove();
+    this.texts = [];
+    const shared = new Set<THREE.Material>([Assets.kitMaterial, vcMaterial, coinMaterial]);
+    const sharedGeo = new Set<THREE.BufferGeometry>();
+    for (const k of Assets.kit.keys()) sharedGeo.add(Assets.geometry(k));
     this.scene.traverse((o) => {
       const m = o as THREE.Mesh;
-      if (m.geometry && !Assets.kit.has(m.name)) m.geometry.dispose?.();
+      if (!m.isMesh && !(o as THREE.Points).isPoints && !(o as THREE.Line).isLine && !(o as THREE.Sprite).isSprite) return;
+      if (m.geometry && !sharedGeo.has(m.geometry)) m.geometry.dispose();
+      const mats = Array.isArray(m.material) ? m.material : [m.material];
+      for (const mat of mats) {
+        if (!mat || shared.has(mat)) continue;
+        const any = mat as any;
+        // per-level textures (terrain mask, labels) – VAT textures are cached and reused
+        for (const key of ['map', 'uMask']) {
+          const tex = key === 'map' ? any.map : any.uniforms?.[key]?.value;
+          if (tex && tex.isCanvasTexture) tex.dispose();
+        }
+        mat.dispose();
+      }
     });
+    const u = this.terrainUniforms?.uMask?.value as THREE.Texture | undefined;
+    u?.dispose();
+    this.scene.clear();
   }
 }

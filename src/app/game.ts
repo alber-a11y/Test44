@@ -189,6 +189,11 @@ export async function startLevel(level: number, boosters: string[]) {
   updateProfile((p) => { for (const b of boosters) p.boosters[b] = Math.max(0, (p.boosters[b] ?? 0) - 1); p.stats.played++; });
   currentLevel = level;
   usedRevive = false;
+  // show the loading screen while models are baked for this level
+  screen.value = 'loading';
+  loadProgress.value = 0.5;
+  await nextFrame();
+  await nextFrame();
   menuOff?.(); menuOff = null;
   leaveBattle();
   const def = getLevel(level);
