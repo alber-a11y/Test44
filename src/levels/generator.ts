@@ -22,12 +22,12 @@ const POOLS: Record<BiomeId, string[]> = {
   canyon: ['footman', 'runner', 'shield', 'crossbow', 'brute', 'shaman', 'elephant', 'rhino', 'berserker'],
   coast: ['footman', 'runner', 'shield', 'crossbow', 'brute', 'shaman', 'elephant', 'rhino', 'berserker', 'sk_minion', 'sk_rogue', 'sk_warrior', 'sk_mage'],
   snow: ['footman', 'runner', 'shield', 'crossbow', 'brute', 'berserker', 'rhino', 'elephant', 'sk_warrior'],
-  ashlands: ['sk_minion', 'sk_rogue', 'sk_warrior', 'sk_mage', 'brute', 'berserker', 'elephant', 'rhino', 'shaman'],
+  ashlands: ['sk_minion', 'sk_rogue', 'sk_warrior', 'sk_mage', 'brute', 'berserker', 'elephant', 'rhino', 'footman', 'shield'],
 };
 
 export function difficulty(level: number) {
   const L = level - 1;
-  const hpMul = 1 + 0.05 * L + 0.00045 * L * L;
+  const hpMul = 1 + 0.04 * L + 0.0004 * L * L;
   const bountyMul = Math.pow(hpMul, 0.62);
   return { hpMul, bountyMul };
 }
@@ -103,9 +103,9 @@ export function makeWaves(level: number, biome: BiomeId, rng: Rng, nWaves: numbe
   const pool = POOLS[biome].filter((id) => ENEMIES[id].intro <= maxIntro);
   if (!pool.length) pool.push('footman');
   const waves: WaveDef[] = [];
-  const base = (34 + level * 4.2) * (opts.budgetMul ?? 1);
+  const base = (28 + level * 1.7) * (opts.budgetMul ?? 1);
   for (let w = 0; w < nWaves; w++) {
-    let budget = base * (1 + w * 0.42) * (w === nWaves - 1 ? 1.25 : 1);
+    let budget = base * (1 + w * 0.36) * (w === nWaves - 1 ? 1.2 : 1);
     const groups: GroupDef[] = [];
     let delay = 0;
     const nGroups = Math.min(4, 1 + Math.floor(w / 2) + (level > 20 ? 1 : 0));
@@ -123,10 +123,10 @@ export function makeWaves(level: number, biome: BiomeId, rng: Rng, nWaves: numbe
       const share = g === nGroups - 1 ? budget : budget * rng.range(0.35, 0.6);
       let count = Math.max(1, Math.round(share / cost));
       if (ENEMIES[id].large) count = Math.min(count, 2 + Math.floor(level / 15));
-      count = Math.min(count, 24);
+      count = Math.min(count, cost < 6 ? 14 : 22);
       budget -= count * cost;
       const formation = id === 'shield' || id === 'sk_warrior' ? (count >= 4 ? 'turtle' : undefined) : id === 'runner' || id === 'sk_rogue' || id === 'sk_minion' ? 'pack' : id === 'footman' && rng.chance(0.4) ? 'column' : undefined;
-      const gap = ENEMIES[id].large ? 3.2 : formation === 'pack' ? 0.5 : 0.95;
+      const gap = ENEMIES[id].large ? 3.2 : formation === 'pack' ? 0.75 : 0.95;
       groups.push({ enemy: id, count, gap, delay, path: paths > 1 ? (g + w) % paths : 0, formation });
       delay += count * gap * (formation === 'turtle' ? 0.2 : 0.7) + rng.range(1.5, 4);
     }
@@ -162,7 +162,7 @@ export function generateLevel(level: number, endless = false): LevelDef {
   return {
     id: level, biome, seed: level * 31 + 5, width: W, height: H, paths, slots,
     gate: { x: 0, z: -H / 2 + 0.5, angle: 0 },
-    waves: makeWaves(level, biome, rng, nWaves, paths.length, { boss, budgetMul: endless ? 0.9 : 1 }),
+    waves: makeWaves(level, biome, rng, nWaves, paths.length, { boss, budgetMul: endless ? 0.9 : boss ? 0.82 : 1 }),
     startGold: Math.round(240 + level * 6),
     lives: 20,
     hpMul, bountyMul, boss, endless: endless || undefined,

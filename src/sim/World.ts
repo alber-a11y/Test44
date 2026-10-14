@@ -523,7 +523,7 @@ export class World {
       id: this.id(), def, hp, maxHp: hp, speed: def.speed * this.rng.range(0.95, 1.05), path, d: (atD ?? -1.5) + dOff, lane,
       x: 0, z: 0, dx: 0, dz: 1, state: 'walk', deadT: 0, animT: this.rng.range(0, 2), attackAnim: 0, slowMul: 1, slowT: 0, burnDps: 0, burnT: 0,
       stunT: 0, frozen: false, blocker: 0, atkCd: 0, abilityCd: def.warcry?.every ?? def.healer?.every ?? 0, summonCd: def.summoner?.every ?? 0,
-      chargeT: 0, buffT: 0, buffMul: 1, hitFlash: 0, bounty: def.bounty * this.level.bountyMul * (1 + this.upg('bounty')), shootTarget: 0,
+      chargeT: 0, buffT: 0, buffMul: 1, hitFlash: 0, bounty: def.bounty * 1.4 * this.level.bountyMul * (1 + this.upg('bounty')), shootTarget: 0,
     };
     this.placeEnemy(e);
     this.enemies.push(e);
@@ -594,7 +594,8 @@ export class World {
         if (e.summonCd <= 0) {
           e.summonCd = def.summoner.every;
           for (let k = 0; k < def.summoner.count; k++) {
-            this.spawnEnemy(def.summoner.enemy, e.path, this.rng.range(-0.8, 0.8), 0, Math.max(0, e.d - 0.8 - k * 0.5));
+            const m = this.spawnEnemy(def.summoner.enemy, e.path, this.rng.range(-0.8, 0.8), 0, Math.max(0, e.d - 0.8 - k * 0.5));
+            m.bounty *= 0.3;
           }
           this.emit({ t: 'summon', x: e.x, z: e.z });
           e.attackAnim = 0.8;
@@ -634,6 +635,7 @@ export class World {
         e.atkCd -= dt;
         const tgt = this.nearestUnit(e.x, e.z, def.ranged.range);
         if (tgt) {
+          // shoot on the move (slowed) so archers can never stall a level
           e.state = 'shoot';
           e.shootTarget = tgt.id;
           if (e.atkCd <= 0) {
@@ -641,6 +643,9 @@ export class World {
             e.attackAnim = 0.6;
             this.fireAtUnit(e, tgt);
           }
+          e.d += e.speed * e.slowMul * 0.35 * dt;
+          this.placeEnemy(e);
+          if (e.d >= this.paths[e.path].length) { this.leak(e); this.enemies.splice(i, 1); }
           continue;
         } else e.state = 'walk';
       }
@@ -710,8 +715,8 @@ export class World {
     if (from && e.def.shieldFront && (from.kind === 'arrow' || from.kind === 'bolt')) {
       const vx = from.x - e.x, vz = from.z - e.z;
       const l = Math.hypot(vx, vz) || 1;
-      if ((vx * e.dx + vz * e.dz) / l > 0.3) {
-        a *= 0.15;
+      if ((vx * e.dx + vz * e.dz) / l > 0.5) {
+        a *= 0.4;
         this.emit({ t: 'deflect', x: e.x, z: e.z });
       }
     }
@@ -848,7 +853,7 @@ export class World {
 
   private fire(t: Tower, e: Enemy) {
     const s = t.stats;
-    const scale = Math.sqrt(this.level.hpMul) * 0.5 + 0.5;
+    const scale = Math.sqrt(this.level.hpMul) * 0.6 + 0.4;
     const dmg = this.rollDmg(s) * t.dmgMul * scale;
     const sy = this.towerTop(t);
     this.emit({ t: 'shoot', kind: s.projectile, x: t.x, z: t.z, tower: t.id });
@@ -1094,7 +1099,7 @@ export class World {
       e = this.findTargetFor(u);
       if (e) {
         u.target = e.id;
-        if (!e.blocker && !e.def.trample) { e.blocker = u.id; }
+        if (!e.blocker && !e.def.trample && !e.def.boss) { e.blocker = u.id; }
       }
     }
     if (e) {
@@ -1302,8 +1307,8 @@ export class World {
         const tx = toHero ? h!.x : c.x, tz = toHero ? h!.z : c.z, ty = toHero ? 1 : 6;
         const dx = tx - c.x, dy = ty - c.y, dz = tz - c.z;
         const dist = Math.hypot(dx, dy, dz);
-        const sp = 9 + c.age * 4;
-        if (dist < 0.35) {
+        const sp = Math.min(30, 9 + c.age * 4);
+        if (dist < 0.35 || dist <= sp * dt) {
           const bonus = toHero ? 1.25 : 1;
           const v = Math.round(c.value * bonus);
           this.gold += v;

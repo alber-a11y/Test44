@@ -43,7 +43,7 @@ const WAVES: Record<number, WaveDef[]> = {
   7: [wave(0, g('footman', 10, 0.9, 0)), wave(14, g('brute', 1, 1, 0), g('footman', 6, 1, 3)), wave(14, g('shield', 8, 1, 0, 'turtle'), g('brute', 2, 3, 6)), wave(14, g('runner', 14, 0.35, 0, 'pack'), g('crossbow', 8, 0.9, 5)), wave(14, g('brute', 3, 3, 0), g('footman', 12, 0.7, 4, 'column')), wave(14, g('shield', 12, 1, 0, 'turtle'), g('brute', 3, 3, 6), g('crossbow', 10, 0.8, 10)), wave(14, g('brute', 4, 2.5, 0), g('runner', 18, 0.3, 6, 'pack'), g('shield', 12, 1, 12, 'turtle'))],
   8: [wave(0, g('footman', 12, 0.9, 0)), wave(14, g('shaman', 2, 2, 0), g('footman', 10, 0.9, 1)), wave(14, g('shield', 12, 1, 0, 'turtle'), g('shaman', 2, 2, 3)), wave(14, g('brute', 3, 3, 0), g('shaman', 2, 2, 2)), wave(14, g('runner', 18, 0.3, 0, 'pack'), g('crossbow', 10, 0.8, 6)), wave(14, g('footman', 16, 0.6, 0, 'column'), g('shaman', 3, 2, 5), g('brute', 3, 3, 9)), wave(14, g('shield', 16, 1, 0, 'turtle'), g('shaman', 3, 2, 4), g('brute', 4, 2.5, 10), g('runner', 16, 0.3, 16, 'pack'))],
   9: [wave(0, g('footman', 12, 0.8, 0)), wave(14, g('shield', 12, 1, 0, 'turtle'), g('shaman', 2, 2, 4)), wave(14, g('brute', 4, 2.5, 0), g('crossbow', 8, 0.9, 5)), wave(14, g('runner', 20, 0.3, 0, 'pack'), g('shield', 8, 1, 6, 'turtle')), wave(14, g('brute', 5, 2.5, 0), g('shaman', 3, 2, 3)), wave(14, g('footman', 18, 0.5, 0, 'column'), g('crossbow', 12, 0.7, 6), g('brute', 4, 2.5, 12)), wave(14, g('shield', 16, 1, 0, 'turtle'), g('shaman', 4, 2, 4), g('brute', 5, 2.5, 10), g('runner', 18, 0.3, 18, 'pack'))],
-  10: [wave(0, g('footman', 14, 0.8, 0)), wave(14, g('shield', 12, 1, 0, 'turtle'), g('runner', 12, 0.35, 5, 'pack')), wave(14, g('brute', 4, 2.5, 0), g('shaman', 3, 2, 3)), wave(14, g('crossbow', 12, 0.7, 0), g('shield', 12, 1, 6, 'turtle')), wave(14, g('runner', 20, 0.3, 0, 'pack'), g('brute', 5, 2.5, 6)), wave(14, g('footman', 20, 0.5, 0, 'column'), g('shaman', 4, 2, 6), g('crossbow', 10, 0.7, 10)), wave(18, g('shield', 12, 1, 0, 'turtle'), g('warlord', 1, 1, 6), g('brute', 4, 3, 10), g('footman', 14, 0.6, 16))],
+  10: [wave(0, g('footman', 12, 0.9, 0)), wave(14, g('shield', 8, 1, 0, 'turtle'), g('runner', 10, 0.45, 6, 'pack')), wave(14, g('brute', 3, 3, 0), g('shaman', 2, 2, 3)), wave(14, g('crossbow', 8, 0.9, 0), g('shield', 8, 1, 6, 'turtle')), wave(14, g('runner', 14, 0.4, 0, 'pack'), g('brute', 3, 3, 6)), wave(16, g('footman', 14, 0.6, 0, 'column'), g('shaman', 2, 2, 6)), wave(20, g('warlord', 1, 1, 0), g('footman', 8, 0.9, 4), g('shield', 8, 1, 12, 'turtle'))],
 };
 
 const TIPS: Record<number, string[]> = {
@@ -82,7 +82,7 @@ export function getLevel(id: number): LevelDef {
     const { hpMul, bountyMul } = difficulty(id);
     const nSlots = id <= 2 ? 7 : id <= 6 ? 9 : 10 + Math.floor(id / 8);
     const slots = placeSlots(paths, W, H, nSlots, rng, id >= 3 ? 4 : 0, 30 + id * 3);
-    const waves = WAVES[id] ?? makeWaves(id, biomeFor(id), rng, Math.min(12, 7 + Math.floor((id - 10) / 3)), 1, { boss: BOSSES[id], maxIntro: id });
+    const waves = WAVES[id] ?? makeWaves(id, biomeFor(id), rng, Math.min(12, 7 + Math.floor((id - 10) / 3)), 1, { boss: BOSSES[id], maxIntro: id, budgetMul: BOSSES[id] ? 0.8 : 0.95 });
     lvl = {
       id, biome: biomeFor(id), seed: id * 31 + 5, width: W, height: H, paths, slots,
       gate: { x: 0, z: -H / 2 + 0.5, angle: 0 }, waves,
