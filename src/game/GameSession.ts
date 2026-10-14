@@ -27,7 +27,6 @@ export class GameSession {
   private offUpdate: () => void;
   private hudT = 0;
   private ended = false;
-  private endTimer = -1;
   private bossAnnounced = false;
 
   constructor(public engine: Engine, public level: LevelDef, loadout: Loadout, textLayer: HTMLDivElement, private cb: SessionCallbacks) {
@@ -80,10 +79,6 @@ export class GameSession {
     this.view.update(dt, simDt);
     this.hudT -= dt;
     if (this.hudT <= 0) { this.hudT = 0.1; this.publishHud(); }
-    if (this.endTimer > 0 && !paused) {
-      this.endTimer -= dt;
-      if (this.endTimer <= 0) { this.endTimer = -1; this.cb.onEnd(this.world.result as 'victory' | 'defeat', this.world); }
-    }
     const sel = selection.value;
     if (sel) {
       const pos = sel.kind === 'slot' ? this.world.slots[sel.index] : this.world.towers.find((t) => t.id === sel.index);
@@ -141,7 +136,9 @@ export class GameSession {
       case 'defeat':
         if (!this.ended) {
           this.ended = true;
-          this.endTimer = e.t === 'victory' ? 1.8 : 1.2;
+          const res = e.t;
+          // real-time delay (not frame based) so slow devices don't stall the result screen
+          setTimeout(() => { if (this.ended && this.world.result === res) this.cb.onEnd(res, this.world); }, res === 'victory' ? 1800 : 1200);
           sfx(e.t, 1);
           this.closeMenus();
         }
@@ -153,7 +150,6 @@ export class GameSession {
   revive() {
     this.world.revive();
     this.ended = false;
-    this.endTimer = -1;
   }
 
   // -----------------------------------------------------------------------------------------

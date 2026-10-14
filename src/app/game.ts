@@ -60,6 +60,8 @@ export function towerAvailable(id: string, p = profile.value) {
 }
 
 export function resolveQuality(): Quality {
+  const forced = new URLSearchParams(location.search).get('q');
+  if (forced === 'low' || forced === 'medium' || forced === 'high') return forced;
   const q = profile.value.settings.quality;
   return q === 'auto' ? detectQuality() : q;
 }
