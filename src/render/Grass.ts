@@ -56,8 +56,8 @@ export function buildGrass(field: Field, density: number, avoid: { x: number; z:
   const group = new THREE.Group();
   const pad = 5;
   const areaW = field.level.width + pad * 2, areaH = field.level.height + pad * 2;
-  const count = Math.round(areaW * areaH * 26 * density);
-  const geo = clumpGeometry(rng, 6);
+  const count = Math.round(areaW * areaH * 18 * density);
+  const geo = clumpGeometry(rng, 5);
   // vertex color gradient root -> tip
   const root = new THREE.Color(look.bladeRoot), tip = new THREE.Color(look.bladeTip);
   const uvA = geo.getAttribute('uv');

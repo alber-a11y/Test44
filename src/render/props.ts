@@ -284,7 +284,7 @@ export function makePineGeometry(variant: number, snow = false): THREE.BufferGeo
     const radius = (0.36 - k * 0.26) * (0.9 + r() * 0.2);
     const h = 0.32 - k * 0.1;
     const y = trunkH + k * 0.72;
-    const g = new THREE.ConeGeometry(radius, h, 9, 2, true);
+    const g = new THREE.ConeGeometry(radius, h, 8, 1, true);
     g.translate(0, y + h / 2, 0);
     const geo = g.toNonIndexed();
     for (const k2 of Object.keys(geo.attributes)) if (!['position', 'normal'].includes(k2)) geo.deleteAttribute(k2);
