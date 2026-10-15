@@ -7,6 +7,7 @@ import { profile, updateProfile } from '../app/save';
 import { getLevel } from '../levels/levels';
 import { ENEMIES } from '../data/enemies';
 import { BOOSTERS, BOOSTER_ORDER } from '../data/items';
+import { HERO_ORDER } from '../data/heroes';
 import { thumbs } from '../render/Thumbs';
 import { AdBtn, Btn, ModalFrame, Price, Stars } from './common';
 import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy } from './icons';
@@ -98,6 +99,16 @@ function PreLevel({ level }: { level: number }) {
           </div>
         ))}
       </div>
+      <div class="section-h" style={{ marginTop: 'calc(var(--u) * 1)' }}>{t('tab_heroes')}</div>
+      <div class="row" style={{ gap: 'calc(var(--u) * 1.5)' }}>
+        {HERO_ORDER.filter((id) => p.heroes.includes(id)).map((id) => (
+          <button key={id} class={'slot-btn ' + (p.hero === id ? 'active' : '')} title={t('h_' + id)} style={{ width: 'calc(var(--u) * 12)', height: 'calc(var(--u) * 12)', overflow: 'hidden' }}
+            onClick={() => { Audio.sfx('click'); updateProfile((d) => (d.hero = id)); }}>
+            <img src={thumbs['hero_' + id]} style={{ width: '120%', height: '120%', objectFit: 'cover', marginTop: '10%' }} />
+          </button>
+        ))}
+      </div>
+      <div class="small-t muted">{t('h_' + p.hero)}</div>
       <div class="section-h" style={{ marginTop: 'calc(var(--u) * 1)' }}>{t('boosters')}</div>
       <div class="row" style={{ marginBottom: 'calc(var(--u) * 3)' }}>
         {BOOSTER_ORDER.map((id) => {
