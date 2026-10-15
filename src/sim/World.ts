@@ -391,7 +391,7 @@ export class World {
 
   resetSpellCooldown(id: string) { if (id in this.spellCd) this.spellCd[id] = 0; }
 
-  static FREE_CHARGES = 3;
+  static FREE_CHARGES = 1;
 
   /** Free charges + owned stock. */
   consumableCount(id: string) { return (this.freeCharges[id] ?? 0) + (this.consumables[id] ?? 0); }
