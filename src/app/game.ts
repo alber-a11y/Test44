@@ -90,7 +90,7 @@ export async function boot() {
   engine = new Engine(document.body);
   document.body.insertBefore(engine.canvas, app);
   engine.setQuality(resolveQuality());
-  if (import.meta.env.DEV) { (window as any).__engine = engine; import('../render/Thumbs').then((m) => ((window as any).__thumbs = m.thumbs)); }
+  if (import.meta.env.DEV) { (window as any).__engine = engine; (window as any).__audio = Audio; import('../render/Thumbs').then((m) => ((window as any).__thumbs = m.thumbs)); }
   textLayer = document.createElement('div');
   textLayer.className = 'text-layer';
   document.body.insertBefore(textLayer, app);

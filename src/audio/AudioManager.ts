@@ -47,8 +47,10 @@ class AudioManager {
     this.musicBus.connect(this.master);
     this.sfxBus.connect(comp);
     this.applyVolumes();
+    // safety net: if the context ever starts running while something wants silence, stop it again
+    this.ctx.addEventListener('statechange', () => this.sync());
     const unlock = () => {
-      if (this.ctx && this.ctx.state !== 'running' && this.reasons.size === 0) this.ctx.resume();
+      this.sync();
       if (this.wantedMusic && !this.music) this.playMusic(this.wantedMusic);
     };
     addEventListener('pointerdown', unlock, true);
@@ -169,11 +171,35 @@ class AudioManager {
   /** Mute everything for a reason (e.g. 'ad', 'hidden'); resumes when all reasons are cleared. */
   suspend(reason: string) {
     this.reasons.add(reason);
-    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend();
+    this.sync();
   }
   resume(reason: string) {
     this.reasons.delete(reason);
-    if (this.reasons.size === 0 && this.ctx && this.ctx.state !== 'running') this.ctx.resume();
+    this.sync();
+  }
+
+  /**
+   * Bring the context to the wanted state. suspend()/resume() are async and `state` only changes when they
+   * settle, so a quick hide→show→hide (e.g. restoring a minimized browser on another tab) used to leave a
+   * pending resume running in a hidden tab. Re-check after every transition until it matches.
+   */
+  private syncing = false;
+  private syncOp = 0;
+  private sync() {
+    const ctx = this.ctx;
+    if (!ctx || this.syncing || ctx.state === 'closed') return;
+    const silent = this.reasons.size > 0;
+    let p: Promise<void> | null = null;
+    if (silent && ctx.state === 'running') p = ctx.suspend();
+    else if (!silent && ctx.state !== 'running') p = ctx.resume();
+    if (!p) return;
+    this.syncing = true;
+    const op = ++this.syncOp;
+    const done = () => { if (op !== this.syncOp) return; this.syncing = false; this.sync(); };
+    p.then(done, done);
+    // resume() can stay pending until a user gesture: stop waiting so a later suspend isn't blocked
+    // (the statechange listener still catches it if that resume eventually goes through)
+    setTimeout(() => { if (op === this.syncOp && this.syncing) { this.syncOp++; this.syncing = false; if (this.reasons.size) this.sync(); } }, 800);
   }
   get muted() { return this.reasons.size > 0; }
 }

@@ -52,13 +52,31 @@ class PlatformImpl {
     });
     document.addEventListener('touchmove', (e) => { if ((e as TouchEvent).touches.length > 1) e.preventDefault(); }, { passive: false });
     // pause & mute when hidden
-    document.addEventListener('visibilitychange', () => this.emitHidden(document.hidden));
+    // Hiding is immediate; showing is only trusted when the tab is visible AND focused, re-checked after a
+    // short delay so transient events (window restore, tab drag, OS app switch) can't unmute a background tab.
+    document.addEventListener('visibilitychange', () => (document.hidden ? this.emitHidden(true) : this.checkShown()));
     addEventListener('blur', () => this.emitHidden(true));
-    addEventListener('focus', () => this.emitHidden(document.hidden));
+    addEventListener('focus', () => this.checkShown());
     addEventListener('pagehide', () => this.emitHidden(true));
+    addEventListener('pageshow', () => this.checkShown());
+    // the player interacting with the game is proof it's in front (e.g. an iframe that never got focus)
+    addEventListener('pointerdown', () => { if (!document.hidden) this.emitHidden(false); }, true);
   }
 
-  private emitHidden(h: boolean) { for (const l of this.listeners) l(h); }
+  private isHidden = false;
+  private showTimer = 0;
+  private checkShown() {
+    clearTimeout(this.showTimer);
+    this.showTimer = window.setTimeout(() => {
+      if (!document.hidden && document.hasFocus()) this.emitHidden(false);
+    }, 250);
+  }
+  private emitHidden(h: boolean) {
+    if (h) clearTimeout(this.showTimer);
+    if (h === this.isHidden) return;
+    this.isHidden = h;
+    for (const l of this.listeners) l(h);
+  }
   onVisibility(fn: (hidden: boolean) => void) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
 
   /** Equivalent of ysdk.features.LoadingAPI.ready() */
