@@ -69,6 +69,7 @@ export function BattleHud() {
       </div>
 
       <Tips />
+      <TutorialArrow />
       <Banners />
     </div>
   );
@@ -304,6 +305,42 @@ function StatLine({ st }: { st: TowerStats }) {
 
 function markTip(id: string) {
   if (tipQueue.value[0] === id) tipQueue.value = tipQueue.value.slice(1);
+}
+
+/** Bouncing arrow that points at what the current tutorial tip talks about. */
+function TutorialArrow() {
+  const h = hud.value;
+  const s = getSession();
+  const seen = profile.value.tipsSeen;
+  const tip = tipQueue.value.find((x) => !seen.includes(x));
+  if (!h || !s || !tip || selection.value || targeting.value) return null;
+  const w = s.world;
+  let pos: { x: number; y: number } | null = null;
+  if (tip === 'tip_build' && w.towers.length === 0) {
+    // the open slot closest to the start of the road
+    const p0 = w.paths[0];
+    let best = -1, bd = Infinity;
+    w.slots.forEach((sl, i) => {
+      if (!sl.open || sl.tower) return;
+      const sp = s.project(sl.x, 1.2, sl.z);
+      // must be clearly visible (not under the tip box or the HUD)
+      if (sp.y > innerHeight * 0.66 || sp.y < innerHeight * 0.14 || sp.x < 40 || sp.x > innerWidth - 40) return;
+      const c = p0.closest(sl.x, sl.z);
+      const score = c.d + c.dist * 2;
+      if (score < bd) { bd = score; best = i; }
+    });
+    if (best >= 0) { const sl = w.slots[best]; pos = s.project(sl.x, 1.2, sl.z); }
+  } else if ((tip === 'tip_wave' || tip === 'tip_build') && h.spawnMarkers.length && (h.waitingFirstWave || !h.waveSpawning)) {
+    const m = h.spawnMarkers[0];
+    pos = { x: m.x, y: m.y - uPx() * 13 };
+  } else if (tip === 'tip_hero' && w.hero && w.hero.state !== 'dead') {
+    pos = s.project(w.hero.x, 2.4, w.hero.z);
+  } else if (tip === 'tip_upgrade' && w.towers.length) {
+    const tw = w.towers[0];
+    pos = s.project(tw.x, 4.2, tw.z);
+  }
+  if (!pos) return null;
+  return <div class="tut-arrow no-pe" style={{ left: `${pos.x}px`, top: `${pos.y}px` }}>▼</div>;
 }
 
 function Tips() {
