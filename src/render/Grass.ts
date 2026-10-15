@@ -9,8 +9,8 @@ function clumpGeometry(rng: Rng, blades: number): THREE.BufferGeometry {
     const r = rng.range(0, 0.12);
     const ox = Math.cos(a) * r, oz = Math.sin(a) * r;
     const yaw = rng.range(0, Math.PI);
-    const w = rng.range(0.035, 0.06);
-    const h = rng.range(0.7, 1.15);
+    const w = rng.range(0.07, 0.11);
+    const h = rng.range(0.65, 1.0);
     const bend = rng.range(0.05, 0.22);
     const cx = Math.cos(yaw), cz = Math.sin(yaw);
     const bx = -cz * bend, bz = cx * bend;
@@ -56,10 +56,11 @@ export function buildGrass(field: Field, density: number, avoid: { x: number; z:
   const group = new THREE.Group();
   const pad = 5;
   const areaW = field.level.width + pad * 2, areaH = field.level.height + pad * 2;
-  const count = Math.round(areaW * areaH * 18 * density);
-  const geo = clumpGeometry(rng, 5);
+  const count = Math.round(areaW * areaH * 11 * density);
+  const geo = clumpGeometry(rng, 4);
   // vertex color gradient root -> tip
-  const root = new THREE.Color(look.bladeRoot), tip = new THREE.Color(look.bladeTip);
+  // low contrast against the ground keeps distant grass from shimmering
+  const root = new THREE.Color(look.grassA).lerp(new THREE.Color(look.bladeRoot), 0.2), tip = new THREE.Color(look.bladeTip).lerp(new THREE.Color(look.grassB), 0.5);
   const uvA = geo.getAttribute('uv');
   const cols = new Float32Array(uvA.count * 3);
   const tmpC = new THREE.Color();
@@ -80,10 +81,12 @@ vec3 ip = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2])
 #else
 vec3 ip = vec3(0.0);
 #endif
-float wv = sin(uTime * 1.7 + ip.x * 0.35 + ip.z * 0.22) * 0.6 + sin(uTime * 3.1 + ip.x * 1.3) * 0.25;
+float wv = sin(uTime * 1.05 + ip.x * 0.22 + ip.z * 0.15) * 0.7 + sin(uTime * 1.9 + ip.x * 0.6) * 0.15;
 float k = uv.y * uv.y;
-transformed.x += wv * k * 0.13;
-transformed.z += wv * k * 0.06;`);
+transformed.x += wv * k * 0.05;
+transformed.z += wv * k * 0.025;`);
+    // both faces of a blade share the upward normal: no dark back faces (the source of the shimmer)
+    s.fragmentShader = s.fragmentShader.replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\nnormal = normalize(vNormal);');
   };
   mat.onBeforeCompile = windPatch;
 
@@ -106,7 +109,7 @@ transformed.z += wv * k * 0.06;`);
     q.setFromAxisAngle(up, rng.range(0, Math.PI * 2));
     m.compose(p.set(x, y - 0.02, z), q, sc.set(h * 1.2, h, h * 1.2));
     mesh.setMatrixAt(n, m);
-    tmpC.setRGB(1, 1, 1).multiplyScalar(rng.range(0.82, 1.12)).lerp(dry, b * 0.35);
+    tmpC.setRGB(1, 1, 1).multiplyScalar(rng.range(0.93, 1.05)).lerp(dry, b * 0.25);
     mesh.setColorAt(n, tmpC);
     n++;
     if (rng.chance(0.06 * (0.4 + b))) flowerPts.push([x, z]);
