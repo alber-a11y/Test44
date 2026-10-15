@@ -10,7 +10,7 @@ import { Particles } from './Particles';
 import { NOISE_GLSL } from './glsl';
 import { CameraRig } from './CameraRig';
 import { VatCrowd } from './vat';
-import { CHAR_SCALE, getUnitModel, UNIT_SPECS } from './units';
+import { CHAR_SCALE, getUnitModel, UNIT_SPECS, HORSE_SADDLE_Y } from './units';
 import { TowerVisual } from './TowerVisual';
 import { Assets } from './Assets';
 import {
@@ -178,7 +178,7 @@ export class GameView {
     scene.add(this.cart);
 
     // ---- crowds: pre-bake models used by this level
-    const keys = new Set<string>(['militia', HEROES[world.loadout.hero]?.model ?? 'hero_ranger', 'tower_archer']);
+    const keys = new Set<string>(['militia', HEROES[world.loadout.hero]?.model ?? 'hero_ranger', 'tower_archer', 'horse']);
     for (const w of level.waves) for (const g of w.groups) {
       keys.add(ENEMIES[g.enemy].model);
       const sm = ENEMIES[g.enemy].summoner?.enemy;
@@ -609,9 +609,22 @@ export class GameView {
       }
     }
     const fl = u.hitFlash > 0 ? 2 : 1;
-    c.push(u.x, 0, u.z, u.face, u.kind === 'hero' ? 1.15 : 1, clip, t, fl, fl, fl);
-    if (u.state !== 'dead' && (u.hp < u.maxHp || u.kind === 'hero')) {
-      bar(u.x, c.model.height * c.baseScale * (u.kind === 'hero' ? 1.15 : 1) + 0.3, u.z, u.kind === 'hero' ? 1.1 : 0.7, u.hp / u.maxHp, 0.25, 0.8, 0.3);
+    if (u.kind === 'hero') {
+      // mounted hero: horse gallops when moving, rider plays idle/attack/death on top
+      const horse = this.crowd('horse');
+      const hclip = clip === 'walk' ? 'walk' : clip === 'death' ? 'death' : 'idle';
+      const ht = clip === 'walk' ? this.time : t;
+      horse.push(u.x, 0, u.z, u.face, 1.15, hclip, ht, fl, fl, fl);
+      const dead = clip === 'death';
+      const rclip = dead ? 'death' : clip === 'walk' ? 'idle' : clip;
+      const ry = dead ? Math.max(0, HORSE_SADDLE_Y * 1.15 - t * 1.6) : HORSE_SADDLE_Y * 1.15 - 0.3 + (hclip === 'walk' ? Math.abs(Math.sin(this.time * Math.PI * 2 / 0.55 * 2)) * 0.05 : 0);
+      c.push(u.x, ry, u.z, u.face, 1.08, rclip, t, fl, fl, fl);
+      if (!dead) bar(u.x, HORSE_SADDLE_Y * 1.15 + c.model.height * c.baseScale + 0.1, u.z, 1.1, u.hp / u.maxHp, 0.25, 0.8, 0.3);
+      return;
+    }
+    c.push(u.x, 0, u.z, u.face, 1, clip, t, fl, fl, fl);
+    if (u.state !== 'dead' && u.hp < u.maxHp) {
+      bar(u.x, c.model.height * c.baseScale + 0.3, u.z, 0.7, u.hp / u.maxHp, 0.25, 0.8, 0.3);
     }
   }
 

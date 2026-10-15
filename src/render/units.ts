@@ -29,7 +29,7 @@ function allyClips(attack: string): Record<string, ClipSpec> {
 type CharDef = Omit<CharVariantSpec, 'key'>;
 const C = (char: CharKey, keep: string[], clips: Record<string, ClipSpec>, recolor?: Recolor, scaleParts?: Record<string, number>): CharDef => ({ char, keep, clips, recolor, scaleParts });
 
-export const UNIT_SPECS: Record<string, CharDef | { procedural: 'elephant' | 'rhino' | 'mammoth' }> = {
+export const UNIT_SPECS: Record<string, CharDef | { procedural: 'elephant' | 'rhino' | 'mammoth' | 'horse' }> = {
   // ---- enemies
   footman_red: C('knight', ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], enemyClips('Walking_A', '1H_Melee_Attack_Chop')),
   runner_red: C('rogue', ['Knife', 'Knife_Offhand', 'Rogue_Cape'], enemyClips('Running_A', '1H_Melee_Attack_Chop'), RED_FROM_GREEN),
@@ -49,6 +49,7 @@ export const UNIT_SPECS: Record<string, CharDef | { procedural: 'elephant' | 'rh
   elephant: { procedural: 'elephant' },
   rhino: { procedural: 'rhino' },
   mammoth: { procedural: 'mammoth' },
+  horse: { procedural: 'horse' },
   // ---- allies
   militia: C('knight', ['1H_Sword', 'Knight_Cape'], allyClips('1H_Melee_Attack_Chop'), BLUE_FROM_RED),
   footman_blue: C('knight', ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], allyClips('1H_Melee_Attack_Chop'), BLUE_FROM_RED),
@@ -68,7 +69,7 @@ const cache = new Map<string, VatModel>();
 /** Lightweight single-pose bake used for UI portraits (not cached, caller disposes). */
 export function bakePortraitModel(key: string): VatModel {
   const spec = UNIT_SPECS[key];
-  if ('procedural' in spec) return buildBeast(key + '_p', spec.procedural);
+  if ('procedural' in spec) return spec.procedural === 'horse' ? buildHorse(key + '_p') : buildBeast(key + '_p', spec.procedural);
   const first = spec.clips.idle ?? Object.values(spec.clips)[0];
   return bakeCharacter({ key: key + '_p', ...spec, clips: { idle: { name: first.name, frames: 1, loop: true } } });
 }
@@ -81,7 +82,7 @@ export function getUnitModel(key: string): VatModel {
   const spec = UNIT_SPECS[key];
   if (!spec) throw new Error('unknown unit model ' + key);
   let model: VatModel;
-  if ('procedural' in spec) model = buildBeast(key, spec.procedural);
+  if ('procedural' in spec) model = spec.procedural === 'horse' ? buildHorse(key) : buildBeast(key, spec.procedural);
   else model = bakeCharacter({ key, ...spec });
   cache.set(key, model);
   return model;
@@ -103,6 +104,10 @@ function colored(geo: THREE.BufferGeometry, color: number | THREE.Color, jitter 
 }
 
 function buildBeast(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatModel {
+  return buildBody(key, kind);
+}
+
+function buildBody(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatModel {
   const parts: Part[] = [];
   const isRhino = kind === 'rhino';
   const isMammoth = kind === 'mammoth';
@@ -284,4 +289,96 @@ function buildBeast(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatMod
     null,
   );
   return model;
+}
+
+
+// =================================================================================================
+// War horse for the hero (front +Z). Height to the saddle ≈ 1.05 units.
+
+export const HORSE_SADDLE_Y = 1.0;
+
+function buildHorse(key: string): VatModel {
+  type Pose = (clip: string, t: number, m: THREE.Matrix4) => void;
+  const parts: { geo: THREE.BufferGeometry; color: THREE.Color; pose: Pose }[] = [];
+  const T = (x: number, y: number, z: number) => new THREE.Matrix4().makeTranslation(x, y, z);
+  const S = (x: number, y: number, z: number) => new THREE.Matrix4().makeScale(x, y, z);
+  const RX = (a: number) => new THREE.Matrix4().makeRotationX(a);
+  const RZ = (a: number) => new THREE.Matrix4().makeRotationZ(a);
+  const mul = (...ms: THREE.Matrix4[]) => ms.reduce((a, b) => a.multiply(b), new THREE.Matrix4());
+  const coat = 0xcfc8bd, coatDark = 0xa39b90, mane = 0x8a8a8a, hoof = 0x3a3330, cloth = 0x2f6fd6, trim = 0xe8b84a, leather = 0x6b4226;
+  const legH = 0.62, bodyY = 0.95;
+  const body: Pose = (clip, t, m) => {
+    const ph = t * Math.PI * 2;
+    const d = clip === 'death' ? Math.min(1, t * 1.3) : 0;
+    const bob = clip === 'walk' ? Math.sin(ph * 2) * 0.05 : clip === 'idle' ? Math.sin(ph) * 0.01 : 0;
+    const pitch = clip === 'walk' ? Math.sin(ph) * 0.06 : 0;
+    m.copy(mul(T(0, bob - d * 0.45, 0), RZ(d * 1.4), RX(pitch)));
+  };
+  const add = (geo: THREE.BufferGeometry, color: number, local: THREE.Matrix4, anim?: Pose) => {
+    const g = geo.index ? geo.toNonIndexed() : geo;
+    g.applyMatrix4(local);
+    parts.push({ geo: g, color: new THREE.Color(color), pose: (clip, t, m) => { body(clip, t, m); if (anim) { const a = new THREE.Matrix4(); anim(clip, t, a); m.multiply(a); } } });
+  };
+  // torso
+  add(new THREE.SphereGeometry(1, 12, 9), coat, mul(T(0, bodyY, 0), S(0.24, 0.28, 0.6)));
+  add(new THREE.SphereGeometry(1, 10, 8), coat, mul(T(0, bodyY + 0.02, -0.36), S(0.26, 0.28, 0.3)));
+  // neck + head with nod
+  const head: Pose = (clip, t, m) => { const nod = clip === 'walk' ? Math.sin(t * Math.PI * 4) * 0.12 : clip === 'idle' ? Math.sin(t * Math.PI * 2) * 0.03 : 0; m.copy(mul(T(0, bodyY + 0.15, 0.48), RX(-0.6 + nod))); };
+  add(new THREE.CylinderGeometry(0.13, 0.19, 0.6, 9), coat, T(0, 0.28, 0), head);
+  add(new THREE.BoxGeometry(0.06, 0.55, 0.1), mane, mul(T(0, 0.3, -0.13), RX(0.05)), head);
+  add(new THREE.BoxGeometry(0.2, 0.2, 0.42), coat, mul(T(0, 0.62, 0.12), RX(0.6)), head);
+  add(new THREE.BoxGeometry(0.17, 0.15, 0.16), coatDark, mul(T(0, 0.48, 0.32), RX(0.6)), head);
+  for (const sgn of [-1, 1]) add(new THREE.ConeGeometry(0.04, 0.13, 5), coat, T(0.07 * sgn, 0.78, -0.02), head);
+  add(new THREE.BoxGeometry(0.22, 0.04, 0.3), leather, mul(T(0, 0.6, 0.15), RX(0.6)), head);
+  // legs (gallop phases)
+  const legs: [number, number, number][] = [[-0.16, 0.42, 0], [0.16, 0.42, 0.25], [-0.16, -0.45, 0.55], [0.16, -0.45, 0.8]];
+  for (const [x, z, phase] of legs) {
+    const swing: Pose = (clip, t, m) => {
+      const a = clip === 'walk' ? Math.sin((t + phase) * Math.PI * 2) * 0.6 : clip === 'death' ? Math.min(1, t * 1.3) * 0.5 : 0;
+      m.copy(mul(T(x, bodyY - 0.12, z), RX(a)));
+    };
+    const leg = new THREE.CylinderGeometry(0.055, 0.07, legH + 0.12, 7);
+    leg.translate(0, -(legH + 0.12) / 2, 0);
+    add(leg, coat, new THREE.Matrix4(), swing);
+    const h = new THREE.CylinderGeometry(0.07, 0.08, 0.1, 7);
+    h.translate(0, -legH - 0.1, 0);
+    add(h, hoof, new THREE.Matrix4(), swing);
+  }
+  // tail
+  add(new THREE.ConeGeometry(0.08, 0.55, 6), mane, new THREE.Matrix4(), (clip, t, m) => {
+    m.copy(mul(T(0, bodyY + 0.1, -0.6), RX(-2.5 + (clip === 'walk' ? Math.sin(t * Math.PI * 4) * 0.3 : 0)), T(0, 0.27, 0)));
+  });
+  // caparison + saddle
+  add(new THREE.CylinderGeometry(0.3, 0.32, 0.62, 12, 1, true, -Math.PI * 0.62, Math.PI * 1.24), cloth, mul(T(0, bodyY - 0.05, -0.02), RX(Math.PI / 2), S(1, 1, 0.9)));
+  add(new THREE.CylinderGeometry(0.31, 0.33, 0.06, 12, 1, true, -Math.PI * 0.62, Math.PI * 1.24), trim, mul(T(0, bodyY - 0.05, 0.3), RX(Math.PI / 2)));
+  add(new THREE.BoxGeometry(0.34, 0.08, 0.36), leather, T(0, bodyY + 0.3, -0.02));
+
+  let vCount = 0;
+  for (const p of parts) vCount += p.geo.getAttribute('position').count;
+  const uv = new Float32Array(vCount * 2), colors = new Float32Array(vCount * 3), indices: number[] = [];
+  let o = 0;
+  for (const p of parts) {
+    const n = p.geo.getAttribute('position').count;
+    for (let i = 0; i < n; i++) { colors[(o + i) * 3] = p.color.r; colors[(o + i) * 3 + 1] = p.color.g; colors[(o + i) * 3 + 2] = p.color.b; indices.push(o + i); }
+    o += n;
+  }
+  const m = new THREE.Matrix4(), nm = new THREE.Matrix3(), v = new THREE.Vector3();
+  return bakeProcedural(key, { uv, indices, vertexCount: vCount, colors },
+    { walk: { frames: 10, loop: true, duration: 0.55 }, idle: { frames: 6, loop: true, duration: 2.4 }, death: { frames: 10, loop: false, duration: 1.1 }, attack: { frames: 6, loop: true, duration: 2.4 } },
+    (clip, t, outP, outN) => {
+      let off = 0;
+      for (const p of parts) {
+        m.identity();
+        p.pose(clip === 'attack' ? 'idle' : clip, t, m);
+        nm.getNormalMatrix(m);
+        const pa = p.geo.getAttribute('position'), na = p.geo.getAttribute('normal');
+        for (let i = 0; i < pa.count; i++) {
+          v.fromBufferAttribute(pa, i).applyMatrix4(m);
+          outP[(off + i) * 3] = v.x; outP[(off + i) * 3 + 1] = v.y; outP[(off + i) * 3 + 2] = v.z;
+          v.fromBufferAttribute(na, i).applyMatrix3(nm).normalize();
+          outN[(off + i) * 3] = v.x; outN[(off + i) * 3 + 1] = v.y; outN[(off + i) * 3 + 2] = v.z;
+        }
+        off += pa.count;
+      }
+    }, null);
 }
