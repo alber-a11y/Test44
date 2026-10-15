@@ -109,3 +109,15 @@ export function rollDaily() {
     p.daily = { ...p.daily, day: d, claimed: false, freeCoins: 0, spin: false, chest: false, adSpins: 0 };
   });
 }
+
+/** Prefer a newer cloud save (portal player data) over the local one. */
+export async function syncCloud() {
+  const cloud = (await Platform.loadCloud()) as Partial<SaveData> | null;
+  if (!cloud || typeof cloud !== 'object') return;
+  const local = profile.value;
+  const score = (d: Partial<SaveData>) => (d.unlocked ?? 0) * 1000 + Object.values(d.stars ?? {}).reduce((a, b) => a + b, 0);
+  if (score(cloud) > score(local)) {
+    profile.value = { ...defaultSave(), ...cloud, settings: local.settings } as SaveData;
+    persist();
+  }
+}

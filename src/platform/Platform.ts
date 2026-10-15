@@ -10,8 +10,28 @@ export interface AdCallbacks {
   onRewarded?: () => void;
 }
 
+import { initYandex, YandexAdProvider, type YandexSdk } from './yandex';
+import { AdService } from '../ads/AdService';
+
 class PlatformImpl {
   name = 'web';
+  private sdk: YandexSdk | null = null;
+  private player: Awaited<ReturnType<NonNullable<YandexSdk['getPlayer']>>> | null = null;
+
+  /** Connect a portal SDK if one is present on the page (no-op otherwise). */
+  async connectSdk() {
+    this.sdk = await initYandex();
+    if (!this.sdk) return;
+    this.name = 'yandex';
+    AdService.provider = new YandexAdProvider(this.sdk);
+    try { this.player = (await this.sdk.getPlayer?.({ scopes: false })) ?? null; } catch { this.player = null; }
+  }
+
+  /** Cloud save (player data) — returns null when unavailable. */
+  async loadCloud(): Promise<unknown | null> {
+    if (!this.player) return null;
+    try { const d = await this.player.getData(['save']); return d.save ?? null; } catch { return null; }
+  }
   private gameplay = false;
   private listeners = new Set<(hidden: boolean) => void>();
 
@@ -42,20 +62,25 @@ class PlatformImpl {
   onVisibility(fn: (hidden: boolean) => void) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
 
   /** Equivalent of ysdk.features.LoadingAPI.ready() */
-  ready() { console.info('[platform] ready'); }
+  ready() { this.sdk?.features?.LoadingAPI?.ready(); console.info('[platform] ready'); }
   /** Equivalent of GameplayAPI.start()/stop() */
-  gameplayStart() { if (!this.gameplay) { this.gameplay = true; console.info('[platform] gameplay start'); } }
-  gameplayStop() { if (this.gameplay) { this.gameplay = false; console.info('[platform] gameplay stop'); } }
+  gameplayStart() { if (!this.gameplay) { this.gameplay = true; this.sdk?.features?.GameplayAPI?.start(); console.info('[platform] gameplay start'); } }
+  gameplayStop() { if (this.gameplay) { this.gameplay = false; this.sdk?.features?.GameplayAPI?.stop(); console.info('[platform] gameplay stop'); } }
 
   lang(): 'ru' | 'en' {
-    const l = (navigator.languages?.[0] || navigator.language || 'ru').toLowerCase();
+    const l = (this.sdk?.environment?.i18n?.lang || navigator.languages?.[0] || navigator.language || 'ru').toLowerCase();
     return /^(ru|be|uk|kk|uz|ky|tg|hy|az|ka)/.test(l) ? 'ru' : 'en';
   }
 
   loadLocal(key: string): string | null { try { return localStorage.getItem(key); } catch { return null; } }
   saveLocal(key: string, value: string) { try { localStorage.setItem(key, value); } catch { /* storage full / disabled */ } }
   /** Cloud save hook (player.setData on Yandex). */
-  saveCloud(_data: unknown) { /* no-op until an SDK is connected */ }
+  private cloudTimer = 0;
+  saveCloud(data: unknown) {
+    if (!this.player) return;
+    clearTimeout(this.cloudTimer);
+    this.cloudTimer = window.setTimeout(() => { this.player?.setData({ save: data }).catch(() => {}); }, 3000);
+  }
 
   isMobile() { return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(innerWidth, innerHeight) < 900); }
 

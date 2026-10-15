@@ -6,7 +6,7 @@ import { MenuScene } from '../render/MenuScene';
 import { GameSession } from '../game/GameSession';
 import type { World } from '../sim/World';
 import { getLevel, LEVEL_COUNT } from '../levels/levels';
-import { profile, updateProfile, rollDaily, persist } from './save';
+import { profile, updateProfile, rollDaily, persist, syncCloud } from './save';
 import { lang, t } from './i18n';
 import { Platform } from '../platform/Platform';
 import { Audio, type MusicName } from '../audio/AudioManager';
@@ -80,6 +80,8 @@ export function applySettings() {
 
 export async function boot() {
   Platform.init();
+  await Platform.connectSdk();
+  await syncCloud();
   applySettings();
   Audio.init();
   const app = document.getElementById('app')!;
