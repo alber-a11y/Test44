@@ -13,6 +13,7 @@ import { Audio, type MusicName } from '../audio/AudioManager';
 import { AdService, AD_CONFIG } from '../ads/AdService';
 import { TOWERS, TOWER_ORDER } from '../data/towers';
 import { UNIQUES } from '../data/items';
+import { AD_OFFERS } from '../data/adOffers';
 import type { Loadout } from '../sim/types';
 
 export type Screen = 'loading' | 'menu' | 'map' | 'shop' | 'forge' | 'settings' | 'battle';
@@ -89,7 +90,7 @@ export async function boot() {
   engine = new Engine(document.body);
   document.body.insertBefore(engine.canvas, app);
   engine.setQuality(resolveQuality());
-  if (import.meta.env.DEV) (window as any).__engine = engine;
+  if (import.meta.env.DEV) { (window as any).__engine = engine; import('../render/Thumbs').then((m) => ((window as any).__thumbs = m.thumbs)); }
   textLayer = document.createElement('div');
   textLayer.className = 'text-layer';
   document.body.insertBefore(textLayer, app);
@@ -289,6 +290,43 @@ export function closePause() {
   session?.resume('menu');
 }
 
+/** Open the shop or settings from the pause menu; the battle stays paused underneath. */
+export function openFromPause(target: 'shop' | 'settings') {
+  modal.value = null;
+  if (target === 'shop') shopTab.value = 'items';
+  screen.value = target;
+}
+
+/** Back button of shop/forge/settings: return to the paused battle if one is running. */
+export function goBack() {
+  if (session && session.world.result === 'none') {
+    screen.value = 'battle';
+    modal.value = { type: 'pause' };
+    return;
+  }
+  goMenu();
+}
+
+/** Battle: watch a rewarded ad to get one more consumable when the stock is empty. */
+export async function adConsumable(id: string) {
+  if (!session) return;
+  const ok = await AdService.showRewarded('consumable_' + id);
+  if (!ok) { showToast(t('ad_unavailable')); return; }
+  session.world.consumables[id] = (session.world.consumables[id] ?? 0) + 1;
+  updateProfile((p) => { p.stats.ads++; });
+  session.publishHud();
+  Audio.sfx('reward');
+}
+
+/** Pre-battle booster with no stock and not enough coins: get one for an ad. */
+export async function adBooster(id: string): Promise<boolean> {
+  const ok = await AdService.showRewarded('booster_' + id);
+  if (!ok) { showToast(t('ad_unavailable')); return false; }
+  updateProfile((p) => { p.boosters[id] = (p.boosters[id] ?? 0) + 1; p.stats.ads++; });
+  Audio.sfx('reward');
+  return true;
+}
+
 export async function restartLevel() {
   if (session) syncConsumables(session.world);
   modal.value = null;
@@ -463,4 +501,26 @@ export async function spinWheel(withAd: boolean): Promise<number | null> {
     else d.coins += 1000;
   });
   return idx;
+}
+
+/** Shop: one rewarded view towards a 3/3 offer; applies the reward on completion. */
+export async function watchForOffer(id: string) {
+  const offer = AD_OFFERS.find((o) => o.id === id);
+  if (!offer) return;
+  const ok = await AdService.showRewarded('offer_' + id);
+  if (!ok) { showToast(t('ad_unavailable')); return; }
+  let completed = false;
+  updateProfile((p) => {
+    p.stats.ads++;
+    p.adOffers = { ...(p.adOffers ?? {}) };
+    const n = (p.adOffers[id] ?? 0) + 1;
+    if (n >= offer.views) {
+      offer.apply(p);
+      completed = true;
+      p.adOffers[id] = 0;
+      if (offer.once) p.adOffersDone = [...(p.adOffersDone ?? []), id];
+    } else p.adOffers[id] = n;
+  });
+  Audio.sfx(completed ? 'unlock' : 'reward');
+  if (completed) showToast(t('offer_done'));
 }

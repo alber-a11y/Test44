@@ -323,13 +323,13 @@ function buildHorse(key: string): VatModel {
   add(new THREE.SphereGeometry(1, 12, 9), coat, mul(T(0, bodyY, 0), S(0.24, 0.28, 0.6)));
   add(new THREE.SphereGeometry(1, 10, 8), coat, mul(T(0, bodyY + 0.02, -0.36), S(0.26, 0.28, 0.3)));
   // neck + head with nod
-  const head: Pose = (clip, t, m) => { const nod = clip === 'walk' ? Math.sin(t * Math.PI * 4) * 0.12 : clip === 'idle' ? Math.sin(t * Math.PI * 2) * 0.03 : 0; m.copy(mul(T(0, bodyY + 0.15, 0.48), RX(-0.6 + nod))); };
+  const head: Pose = (clip, t, m) => { const nod = clip === 'walk' ? Math.sin(t * Math.PI * 4) * 0.12 : clip === 'idle' ? Math.sin(t * Math.PI * 2) * 0.03 : 0; m.copy(mul(T(0, bodyY + 0.12, 0.5), RX(0.7 + nod))); };
   add(new THREE.CylinderGeometry(0.13, 0.19, 0.6, 9), coat, T(0, 0.28, 0), head);
-  add(new THREE.BoxGeometry(0.06, 0.55, 0.1), mane, mul(T(0, 0.3, -0.13), RX(0.05)), head);
-  add(new THREE.BoxGeometry(0.2, 0.2, 0.42), coat, mul(T(0, 0.62, 0.12), RX(0.6)), head);
-  add(new THREE.BoxGeometry(0.17, 0.15, 0.16), coatDark, mul(T(0, 0.48, 0.32), RX(0.6)), head);
-  for (const sgn of [-1, 1]) add(new THREE.ConeGeometry(0.04, 0.13, 5), coat, T(0.07 * sgn, 0.78, -0.02), head);
-  add(new THREE.BoxGeometry(0.22, 0.04, 0.3), leather, mul(T(0, 0.6, 0.15), RX(0.6)), head);
+  add(new THREE.BoxGeometry(0.06, 0.55, 0.1), mane, T(0, 0.3, -0.13), head);
+  add(new THREE.BoxGeometry(0.19, 0.2, 0.42), coat, mul(T(0, 0.6, 0.12), RX(-0.25)), head);
+  add(new THREE.BoxGeometry(0.16, 0.15, 0.16), coatDark, mul(T(0, 0.64, 0.36), RX(-0.25)), head);
+  for (const sgn of [-1, 1]) add(new THREE.ConeGeometry(0.04, 0.13, 5), coat, mul(T(0.07 * sgn, 0.74, -0.02), RX(-0.6)), head);
+  add(new THREE.BoxGeometry(0.21, 0.04, 0.32), leather, mul(T(0, 0.62, 0.16), RX(-0.25)), head);
   // legs (gallop phases)
   const legs: [number, number, number][] = [[-0.16, 0.42, 0], [0.16, 0.42, 0.25], [-0.16, -0.45, 0.55], [0.16, -0.45, 0.8]];
   for (const [x, z, phase] of legs) {

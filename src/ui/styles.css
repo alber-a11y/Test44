@@ -270,3 +270,6 @@ input[type=range].slider::-moz-range-thumb { width: calc(var(--u) * 5.4); height
 .toast { position: absolute; left: 50%; top: calc(var(--safe-t) + var(--u) * 16); transform: translateX(-50%); padding: calc(var(--u) * 1.6) calc(var(--u) * 3.4); font: 400 calc(var(--u) * 3) var(--font-head); z-index: 40; animation: popin 0.25s; pointer-events: none !important; text-align: center; }
 .tut-arrow { position: absolute; transform: translate(-50%, -100%); font-size: calc(var(--u) * 9); color: #ffe066; text-shadow: 0 0 calc(var(--u) * 2) #ff9a20, 0 3px 0 #6b3a06; animation: tutbounce 0.8s ease-in-out infinite; pointer-events: none !important; z-index: 6; }
 @keyframes tutbounce { 0%, 100% { margin-top: 0; } 50% { margin-top: calc(var(--u) * -3); } }
+.slot-btn.ad-slot { background: radial-gradient(circle at 40% 30%, #8a5ad0, #3a1f6a 70%); }
+.slot-btn.ad-slot .ico:first-child { opacity: 0.75; }
+.slot-btn .count.ad { background: linear-gradient(180deg, #b48aff, #6a2ac8); color: #fff; border-color: #2a0a5a; }

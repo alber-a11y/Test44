@@ -22,6 +22,10 @@ export interface SaveData {
   tipsSeen: string[];
   created: number;
   achievements?: string[];
+  /** rewarded-ad offer progress (views watched) */
+  adOffers?: Record<string, number>;
+  /** completed one-time offers */
+  adOffersDone?: string[];
 }
 
 const KEY = 'hearthguard.save.v1';

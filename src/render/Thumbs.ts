@@ -54,7 +54,7 @@ export function renderThumbnails(engine: Engine) {
   // towers (level 1 look + level 3 look)
   for (const id of Object.keys(TOWERS)) {
     for (const lvl of [0, 2]) {
-      const fake = { def: TOWERS[id], level: lvl, branch: 0, x: 0, z: 0, aim: 0.6, shotT: 0 } as unknown as Tower;
+      const fake = { id: 0, def: TOWERS[id], level: lvl, branch: 0, x: 0, z: 0, aim: 0.6, shotT: 0 } as unknown as Tower;
       const tv = new TowerVisual(fake, false);
       tv.group.position.set(0, 0, 0);
       tv.update(0, 1);

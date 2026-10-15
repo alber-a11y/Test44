@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import {
-  modal, startLevel, closePause, restartLevel, exitToMap, continueAfterVictory, doubleReward, reviveWithAd, claimConvoy, claimDaily, dailyReward, spend,
+  modal, startLevel, closePause, openFromPause, adBooster, restartLevel, exitToMap, continueAfterVictory, doubleReward, reviveWithAd, claimConvoy, claimDaily, dailyReward, spend,
 } from '../app/game';
 import { t } from '../app/i18n';
 import { profile, updateProfile } from '../app/save';
@@ -11,7 +11,7 @@ import { HERO_ORDER } from '../data/heroes';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { thumbs } from '../render/Thumbs';
 import { AdBtn, Btn, ModalFrame, Price, Stars } from './common';
-import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy } from './icons';
+import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy, IcoShop, IcoGear, IcoAd } from './icons';
 import { Audio } from '../audio/AudioManager';
 import { WheelModal } from './Wheel';
 
@@ -28,6 +28,10 @@ export function Modals() {
       <ModalFrame title={t('pause')} color="blue" onClose={closePause}>
         <div class="col" style={{ padding: 'calc(var(--u) * 2) calc(var(--u) * 4)' }}>
           <Btn class="big" onClick={closePause}>{t('resume')}</Btn>
+          <div class="row" style={{ flexWrap: 'nowrap' }}>
+            <Btn class="blue" style={{ flex: 1 }} onClick={() => openFromPause('shop')}><IcoShop size={26} />{t('shop')}</Btn>
+            <Btn class="gray" style={{ flex: 1 }} onClick={() => openFromPause('settings')}><IcoGear size={26} />{t('settings')}</Btn>
+          </div>
           <Btn class="gold" onClick={restartLevel}>{t('restart')}</Btn>
           <Btn class="red" onClick={exitToMap}>{t('exit')}</Btn>
         </div>
@@ -85,6 +89,7 @@ function PreLevel({ level }: { level: number }) {
     if (chosen.includes(id)) { setChosen(chosen.filter((x) => x !== id)); return; }
     if ((p.boosters[id] ?? 0) > 0) { setChosen([...chosen, id]); Audio.sfx('click'); return; }
     const price = BOOSTERS[id].price;
+    if (p.coins < price) { adBooster(id).then((ok) => ok && setChosen((c) => [...c, id])); return; }
     if (spend(price)) { updateProfile((d) => (d.boosters[id] = (d.boosters[id] ?? 0) + 1)); setChosen([...chosen, id]); }
   };
   const title = level === 0 ? t('endless') : t('level_n', { n: level });
@@ -120,7 +125,7 @@ function PreLevel({ level }: { level: number }) {
           return (
             <button key={id} class={'slot-btn ' + (on ? 'active' : '')} style={{ width: 'calc(var(--u) * 13)', height: 'calc(var(--u) * 13)' }} title={t('bod_' + id)} onClick={() => toggle(id)}>
               <Ico />
-              <span class="count">{on ? '✓' : have > 0 ? have : <span style={{ display: 'flex', alignItems: 'center' }}><IcoCoin size={14} />{BOOSTERS[id].price}</span>}</span>
+              <span class="count">{on ? '✓' : have > 0 ? have : p.coins >= BOOSTERS[id].price ? <span style={{ display: 'flex', alignItems: 'center' }}><IcoCoin size={14} />{BOOSTERS[id].price}</span> : <IcoAd size={16} />}</span>
             </button>
           );
         })}

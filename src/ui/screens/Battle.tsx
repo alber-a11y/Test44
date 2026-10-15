@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { hud, selection, targeting, tipQueue, bossBanner, waveBanner } from '../../game/hud';
-import { getSession, openPause, refreshSpell, showToast, openConvoy } from '../../app/game';
+import { getSession, openPause, refreshSpell, showToast, openConvoy, adConsumable } from '../../app/game';
 import { t } from '../../app/i18n';
 import { profile, updateProfile } from '../../app/save';
 import { thumbs } from '../../render/Thumbs';
@@ -50,13 +50,13 @@ export function BattleHud() {
               const Ico = SPELL_ICONS[c.id];
               const active = tg?.kind === 'consumable' && tg.id === c.id;
               return (
-                <button key={c.id} class={'slot-btn ' + (c.count ? '' : 'empty ') + (active ? 'active' : '')} title={t('c_' + c.id) + ' — ' + t('cd_' + c.id)}
+                <button key={c.id} class={'slot-btn ' + (c.count ? '' : 'ad-slot ') + (active ? 'active' : '')} title={t('c_' + c.id) + ' — ' + t('cd_' + c.id)}
                   onClick={() => {
-                    if (!c.count) { showToast(t('c_' + c.id) + ': 0'); Audio.sfx('error', { vol: 0.4 }); return; }
+                    if (!c.count) { adConsumable(c.id); return; }
                     s.useConsumable(c.id);
                   }}>
                   <Ico />
-                  <span class="count">{c.count}</span>
+                  <span class={'count ' + (c.count ? '' : 'ad')}>{c.count ? c.count : <IcoAd size={16} />}</span>
                   {canHover && <span class="key">{i + 4}</span>}
                 </button>
               );

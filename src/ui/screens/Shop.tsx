@@ -1,7 +1,7 @@
 import { t } from '../../app/i18n';
 import { profile, updateProfile, resetProgress } from '../../app/save';
 import {
-  goMenu, shopTab, spend, watchForUnique, watchForCoins, openDailyChest, isUniqueOwned, towerAvailable, applySettings, modal, showToast,
+  goBack, getSession, shopTab, spend, watchForUnique, watchForCoins, openDailyChest, isUniqueOwned, towerAvailable, applySettings, modal, showToast,
 } from '../../app/game';
 import { AdBtn, Btn, Price } from '../common';
 import { ScreenHeader } from './Menus';
@@ -11,6 +11,8 @@ import { HEROES, HERO_ORDER } from '../../data/heroes';
 import { CONSUMABLES, CONSUMABLE_ORDER, BOOSTERS, BOOSTER_ORDER, UNIQUES, UPGRADES, upgradeCost } from '../../data/items';
 import { SPELL_ICONS, IcoCoin, IcoChest, IcoLock } from '../icons';
 import { AD_CONFIG } from '../../ads/AdService';
+import { AD_OFFERS, offerProgress, type AdOffer } from '../../data/adOffers';
+import { watchForOffer } from '../../app/game';
 import { Audio } from '../../audio/AudioManager';
 import { Platform } from '../../platform/Platform';
 
@@ -27,7 +29,7 @@ export function Shop() {
   ];
   return (
     <div class="screen">
-      <ScreenHeader title={t('shop')} onBack={goMenu} />
+      <ScreenHeader title={t('shop')} onBack={goBack} />
       <div class="tabs">
         {tabs.map(([id, label, dot]) => (
           <button key={id} class={'tab ' + (tab === id ? 'on' : '')} onClick={() => { Audio.sfx('click', { vol: 0.6 }); shopTab.value = id; }}>
@@ -36,11 +38,11 @@ export function Shop() {
         ))}
       </div>
       <div class="scroll">
-        {tab === 'towers' && <TowersTab />}
-        {tab === 'heroes' && <HeroesTab />}
-        {tab === 'items' && <ItemsTab />}
+        {tab === 'towers' && <><AdOffers tab="towers" /><TowersTab /></>}
+        {tab === 'heroes' && <><AdOffers tab="heroes" /><HeroesTab /></>}
+        {tab === 'items' && <><AdOffers tab="items" /><ItemsTab /></>}
         {tab === 'unique' && <UniqueTab />}
-        {tab === 'coins' && <CoinsTab />}
+        {tab === 'coins' && <><AdOffers tab="coins" /><CoinsTab /></>}
       </div>
     </div>
   );
@@ -116,7 +118,7 @@ function ItemsTab() {
               <h3>{t('c_' + id)}</h3>
               <p>{t('cd_' + id)}</p>
               <div class="cnt">x{p.consumables[id] ?? 0}</div>
-              <Btn class="gold small" onClick={() => { if (spend(c.price)) updateProfile((d) => (d.consumables[id] = (d.consumables[id] ?? 0) + 1)); }}><Price value={c.price} ok={p.coins >= c.price} /></Btn>
+              <Btn class="gold small" onClick={() => { if (spend(c.price)) { updateProfile((d) => (d.consumables[id] = (d.consumables[id] ?? 0) + 1)); const ss = getSession(); if (ss && ss.world.result === 'none') ss.world.consumables[id] = (ss.world.consumables[id] ?? 0) + 1; } }}><Price value={c.price} ok={p.coins >= c.price} /></Btn>
             </div>
           );
         })}
@@ -204,7 +206,7 @@ export function Forge() {
   const groups: ('tower' | 'army' | 'kingdom')[] = ['tower', 'army', 'kingdom'];
   return (
     <div class="screen">
-      <ScreenHeader title={t('forge_title')} onBack={goMenu} />
+      <ScreenHeader title={t('forge_title')} onBack={goBack} />
       <div class="small-t muted" style={{ textAlign: 'center', margin: 'calc(var(--u) * 1.5) 0' }}>{t('forge_hint')}</div>
       <div class="scroll">
         {groups.map((g) => (
@@ -250,7 +252,7 @@ export function Settings() {
   );
   return (
     <div class="screen">
-      <ScreenHeader title={t('settings')} onBack={goMenu} />
+      <ScreenHeader title={t('settings')} onBack={goBack} />
       <div class="scroll" style={{ maxWidth: 'calc(var(--u) * 100)', margin: '0 auto', width: '100%' }}>
         <div class="panel col" style={{ marginTop: 'calc(var(--u) * 2)' }}>
           <div class="set-row">{t('music')}<input class="slider" type="range" min="0" max="1" step="0.05" value={s.music} onInput={(e) => set((d) => (d.music = +(e.target as HTMLInputElement).value))} /></div>
@@ -270,5 +272,40 @@ export function Settings() {
         <p class="small-t muted" style={{ textAlign: 'center', marginTop: 'calc(var(--u) * 3)' }}>{t('credits')}</p>
       </div>
     </div>
+  );
+}
+
+function offerDesc(o: AdOffer) {
+  if (o.id.startsWith('unlock_')) return t(o.tab === 'heroes' ? 'ofd_hero' : 'ofd_unlock');
+  if (o.id.startsWith('mastery_')) return t('ofd_mastery');
+  if (o.id.startsWith('coins_')) return t('ofd_coins');
+  return t('ofd_' + o.id);
+}
+
+/** Section with rewarded 3/3 offers for a shop tab. */
+function AdOffers({ tab }: { tab: AdOffer['tab'] }) {
+  const p = profile.value;
+  const list = AD_OFFERS.filter((o) => o.tab === tab && !(p.adOffersDone ?? []).includes(o.id) && o.available(p));
+  if (!list.length) return null;
+  return (
+    <>
+      <div class="section-h">{t('ad_offers')}</div>
+      <div class="grid" style={{ marginBottom: 'calc(var(--u) * 2)' }}>
+        {list.map((o) => {
+          const n = offerProgress(p, o.id);
+          const Ico = o.icon.spell ? SPELL_ICONS[o.icon.spell] : o.icon.coin ? IcoCoin : o.id === 'mastery_spells' ? SPELL_ICONS.meteor : null;
+          const img = o.icon.thumb ? (o.icon.thumb === 'hero_ranger' ? thumbs['hero_' + p.hero] : thumbs[o.icon.thumb]) : null;
+          return (
+            <div key={o.id} class="card panel unique">
+              {img ? <img class="thumb" src={img} /> : <div class="ico-big">{Ico && <Ico />}</div>}
+              <h3>{t('of_' + o.id)}</h3>
+              <p>{offerDesc(o)}</p>
+              <div class="progress3">{Array.from({ length: o.views }, (_, i) => <i key={i} class={i < n ? 'on' : ''} />)}</div>
+              <AdBtn class="small pulse" onClick={() => watchForOffer(o.id)}>{n}/{o.views}</AdBtn>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
