@@ -117,7 +117,11 @@ export class GameSession {
       case 'explode': sfx(e.big ? 'boom_big' : 'boom', e.big ? 1 : 0.7); break;
       case 'lightning': sfx('zap', 0.6); break;
       case 'pulse': sfx('fire', 0.25); break;
-      case 'death': sfx(e.large ? 'death_big' : 'death', e.large ? 0.9 : 0.35); break;
+      case 'death': {
+        const pool: SfxName[] = e.large ? ['death_big', 'death_big2'] : ['death', 'death2', 'death3', 'death4'];
+        sfx(pool[Math.floor(Math.random() * pool.length)], e.large ? 0.9 : 0.35);
+        break;
+      }
       case 'collect': sfx('coin', 0.4); break;
       case 'melee': sfx('sword', 0.25); break;
       case 'heal': sfx('heal', 0.5); break;
@@ -262,7 +266,7 @@ export class GameSession {
   }
   useConsumable(id: string) {
     const c = CONSUMABLES[id];
-    if (!this.world.consumables[id]) { Audio.sfx('error', { vol: 0.4 }); return; }
+    if (!this.world.consumableCount(id)) { Audio.sfx('error', { vol: 0.4 }); return; }
     if (c.targeted) this.startTargeting({ kind: 'consumable', id, radius: c.radius ?? 2 });
     else { this.world.useConsumable(id, 0, 0); Audio.sfx(id === 'goldrush' ? 'coins' : 'heal', { vol: 0.8 }); }
   }
@@ -354,7 +358,7 @@ export class GameSession {
       waveSpawning: w.waveSpawning,
       callBonus: w.waitingFirstWave ? 0 : Math.ceil(w.waveTimer * (1.5 + (w.level.id || 35) * 0.04)),
       spells: Object.keys(w.spellCd).map((id) => ({ id, cd: w.spellCd[id], max: SPELLS[id]?.cooldown ?? 30 })),
-      consumables: CONSUMABLE_ORDER.map((id) => ({ id, count: w.consumables[id] ?? 0 })),
+      consumables: CONSUMABLE_ORDER.map((id) => ({ id, count: w.consumableCount(id), free: w.freeCharges[id] ?? 0 })),
       hero: h ? { id: h.def.id, hp: h.hp, maxHp: h.maxHp, dead: h.state === 'dead', respawn: h.respawnT, cds: [h.abilityCd[0], h.abilityCd[1]], maxCds: [HEROES[h.def.id].abilities[0].cooldown, HEROES[h.def.id].abilities[1].cooldown] } : null,
       speed: this.speed,
       paused: this.pauseReasons.has('user'),

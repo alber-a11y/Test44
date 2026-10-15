@@ -17,7 +17,7 @@ export interface HudSnapshot {
   waveSpawning: boolean;
   callBonus: number;
   spells: { id: string; cd: number; max: number }[];
-  consumables: { id: string; count: number }[];
+  consumables: { id: string; count: number; free: number }[];
   hero: { id: string; hp: number; maxHp: number; dead: boolean; respawn: number; cds: [number, number]; maxCds: [number, number] } | null;
   speed: number;
   paused: boolean;

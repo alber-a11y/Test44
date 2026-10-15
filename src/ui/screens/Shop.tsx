@@ -11,7 +11,7 @@ import { HEROES, HERO_ORDER } from '../../data/heroes';
 import { CONSUMABLES, CONSUMABLE_ORDER, BOOSTERS, BOOSTER_ORDER, UNIQUES, UPGRADES, upgradeCost } from '../../data/items';
 import { SPELL_ICONS, IcoCoin, IcoChest, IcoLock } from '../icons';
 import { AD_CONFIG } from '../../ads/AdService';
-import { AD_OFFERS, offerProgress, type AdOffer } from '../../data/adOffers';
+import { AD_OFFERS, offerProgress, attachedOffer, PACK, type AdOffer } from '../../data/adOffers';
 import { watchForOffer } from '../../app/game';
 import { Audio } from '../../audio/AudioManager';
 import { Platform } from '../../platform/Platform';
@@ -64,7 +64,10 @@ function TowersTab() {
             {have ? <Btn class="gray small" disabled>{t('owned')}</Btn> : (
               <>
                 <div class="small-t muted">{t('unlock_at', { n: def.unlockLevel })}</div>
-                <Btn class="gold small" onClick={() => { if (spend(price)) updateProfile((d) => d.towers.push(id)); }}><Price value={price} ok={p.coins >= price} /></Btn>
+                <div class="row" style={{ gap: 'calc(var(--u) * 1.4)', alignItems: 'flex-end' }}>
+                  <Btn class="gold small" onClick={() => { if (spend(price)) updateProfile((d) => d.towers.push(id)); }}><Price value={price} ok={p.coins >= price} /></Btn>
+                  <OfferButton attach={'tower:' + id} />
+                </div>
               </>
             )}
           </div>
@@ -94,7 +97,10 @@ function HeroesTab() {
             ) : def.unique ? (
               <Btn class="purple small" onClick={() => (shopTab.value = 'unique')}>{t('tab_unique')}</Btn>
             ) : (
-              <Btn class="gold small" onClick={() => { if (spend(def.price)) updateProfile((d) => { d.heroes.push(id); d.hero = id; }); }}><Price value={def.price} ok={p.coins >= def.price} /></Btn>
+              <div class="row" style={{ gap: 'calc(var(--u) * 1.4)', alignItems: 'flex-end' }}>
+                <Btn class="gold small" onClick={() => { if (spend(def.price)) updateProfile((d) => { d.heroes.push(id); d.hero = id; }); }}><Price value={def.price} ok={p.coins >= def.price} /></Btn>
+                <OfferButton attach={'hero:' + id} />
+              </div>
             )}
           </div>
         );
@@ -118,7 +124,10 @@ function ItemsTab() {
               <h3>{t('c_' + id)}</h3>
               <p>{t('cd_' + id)}</p>
               <div class="cnt">x{p.consumables[id] ?? 0}</div>
-              <Btn class="gold small" onClick={() => { if (spend(c.price)) { updateProfile((d) => (d.consumables[id] = (d.consumables[id] ?? 0) + 1)); const ss = getSession(); if (ss && ss.world.result === 'none') ss.world.consumables[id] = (ss.world.consumables[id] ?? 0) + 1; } }}><Price value={c.price} ok={p.coins >= c.price} /></Btn>
+              <div class="row" style={{ gap: 'calc(var(--u) * 1.4)', alignItems: 'flex-end' }}>
+                <Btn class="gold small" onClick={() => { if (spend(c.price)) { updateProfile((d) => (d.consumables[id] = (d.consumables[id] ?? 0) + 1)); const ss = getSession(); if (ss && ss.world.result === 'none') ss.world.consumables[id] = (ss.world.consumables[id] ?? 0) + 1; } }}>+1 <Price value={c.price} ok={p.coins >= c.price} /></Btn>
+                <OfferButton attach={'item:' + id} label={'+' + PACK[id]} />
+              </div>
             </div>
           );
         })}
@@ -134,7 +143,10 @@ function ItemsTab() {
               <h3>{t('bo_' + id)}</h3>
               <p>{t('bod_' + id)}</p>
               <div class="cnt">x{p.boosters[id] ?? 0}</div>
-              <Btn class="gold small" onClick={() => { if (spend(b.price)) updateProfile((d) => (d.boosters[id] = (d.boosters[id] ?? 0) + 1)); }}><Price value={b.price} ok={p.coins >= b.price} /></Btn>
+              <div class="row" style={{ gap: 'calc(var(--u) * 1.4)', alignItems: 'flex-end' }}>
+                <Btn class="gold small" onClick={() => { if (spend(b.price)) updateProfile((d) => (d.boosters[id] = (d.boosters[id] ?? 0) + 1)); }}>+1 <Price value={b.price} ok={p.coins >= b.price} /></Btn>
+                <OfferButton attach={'booster:' + id} label={'+' + PACK[id]} />
+              </div>
             </div>
           );
         })}
@@ -285,7 +297,7 @@ function offerDesc(o: AdOffer) {
 /** Section with rewarded 3/3 offers for a shop tab. */
 function AdOffers({ tab }: { tab: AdOffer['tab'] }) {
   const p = profile.value;
-  const list = AD_OFFERS.filter((o) => o.tab === tab && !(p.adOffersDone ?? []).includes(o.id) && o.available(p));
+  const list = AD_OFFERS.filter((o) => o.tab === tab && !o.attach && !(p.adOffersDone ?? []).includes(o.id) && o.available(p));
   if (!list.length) return null;
   return (
     <>
@@ -307,5 +319,19 @@ function AdOffers({ tab }: { tab: AdOffer['tab'] }) {
         })}
       </div>
     </>
+  );
+}
+
+/** "Watch 3 ads" button for a card that also has a coin price. */
+function OfferButton({ attach, label }: { attach: string; label?: string }) {
+  const p = profile.value;
+  const o = attachedOffer(p, attach);
+  if (!o) return null;
+  const n = offerProgress(p, o.id);
+  return (
+    <div class="col" style={{ alignItems: 'center', gap: 'calc(var(--u) * 0.6)' }}>
+      <div class="progress3">{Array.from({ length: o.views }, (_, i) => <i key={i} class={i < n ? 'on' : ''} />)}</div>
+      <AdBtn class="small" onClick={() => watchForOffer(o.id)}>{label ? label + ' · ' : ''}{n}/{o.views}</AdBtn>
+    </div>
   );
 }

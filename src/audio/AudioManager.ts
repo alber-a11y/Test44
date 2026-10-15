@@ -1,7 +1,7 @@
 const BASE = import.meta.env.BASE_URL + 'assets/audio/';
 
 export const SFX = [
-  'arrow', 'bolt', 'catapult', 'boom', 'boom_big', 'magic', 'zap', 'fire', 'hit', 'hit_metal', 'deflect', 'death', 'death_big',
+  'arrow', 'bolt', 'catapult', 'boom', 'boom_big', 'magic', 'zap', 'fire', 'hit', 'hit_metal', 'deflect', 'death', 'death2', 'death3', 'death4', 'death_big', 'death_big2',
   'coin', 'coins', 'build', 'upgrade', 'sell', 'click', 'open', 'error', 'wave', 'horn', 'boss', 'leak', 'victory', 'defeat',
   'heal', 'freeze', 'meteor', 'sword', 'roar', 'stars', 'reward', 'unlock', 'swish', 'step',
 ] as const;

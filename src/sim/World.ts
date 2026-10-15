@@ -201,6 +201,8 @@ export class World {
   goldEarned = 0;
   spellCd: Record<string, number> = {};
   consumables: Record<string, number>;
+  /** free uses granted every battle, spent before the owned stock */
+  freeCharges: Record<string, number> = {};
   goldRushT = 0;
   phoenixUsed = false;
   convoyCd = 70;
@@ -229,6 +231,7 @@ export class World {
     this.maxLives = this.lives;
     this.waveTimer = 0;
     this.consumables = { ...loadout.consumables };
+    for (const id of ['freeze', 'dynamite', 'goldrush', 'repair']) this.freeCharges[id] = World.FREE_CHARGES;
     for (const s of loadout.spells) this.spellCd[s] = 0;
     this.spawnHero();
   }
@@ -388,8 +391,13 @@ export class World {
 
   resetSpellCooldown(id: string) { if (id in this.spellCd) this.spellCd[id] = 0; }
 
+  static FREE_CHARGES = 3;
+
+  /** Free charges + owned stock. */
+  consumableCount(id: string) { return (this.freeCharges[id] ?? 0) + (this.consumables[id] ?? 0); }
+
   useConsumable(id: string, x: number, z: number): boolean {
-    if (!this.consumables[id]) return false;
+    if (!this.consumableCount(id)) return false;
     const scale = Math.sqrt(this.level.hpMul);
     if (id === 'freeze') {
       for (const e of this.enemies) {
@@ -409,7 +417,8 @@ export class World {
     } else if (id === 'repair') {
       this.lives += 5;
     } else return false;
-    this.consumables[id]--;
+    if ((this.freeCharges[id] ?? 0) > 0) this.freeCharges[id]--;
+    else this.consumables[id]--;
     return true;
   }
 

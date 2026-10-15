@@ -254,7 +254,7 @@ function SelectionMenu() {
   if (!sel || !data) return null;
   const { opts, isUp } = data;
   const u = uPx();
-  const R = (opts.length <= 2 ? 13 : 16.5) * u;
+  const R = (opts.length <= 2 ? 15 : 16.5) * u;
   // keep the menu on screen
   const pad = R + 8 * u;
   const cx = Math.min(innerWidth - pad, Math.max(pad, sel.sx));

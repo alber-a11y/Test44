@@ -78,12 +78,19 @@ def build_all():
     S['sword'] = mix((clang(760, 0.28) * 0.6, 1.0), (whoosh(0.15, 5000, 2000), 0.4))
     # ---- creatures
     S['death'] = mix((grunt(170, 90, 0.35), 0.7), (thud(110, 0.2), 0.4))
+    # variations so dying soldiers don't all sound alike
+    S['death2'] = mix((grunt(230, 120, 0.3, ((800, 1.0), (1250, 0.7), (2800, 0.25))), 0.7), (thud(140, 0.18), 0.35), (lowpass(noise(0.15), 2000) * env_exp(0.15, 0.04), 0.3))
+    S['death3'] = mix((grunt(140, 70, 0.45, ((520, 1.0), (900, 0.6), (2300, 0.2))), 0.75), (thud(90, 0.25), 0.45))
+    S['death4'] = mix((clang(480, 0.35) * 0.5, 0.6), (grunt(190, 110, 0.25, ((600, 1.0), (1000, 0.6), (2500, 0.2))), 0.55), (thud(100, 0.3), 0.6))
     roar_f = np.linspace(110, 70, int(1.0 * SR)) * (1 + 0.06 * np.sin(2 * np.pi * 6 * t_axis(1.0)))
     roar = distort(formant(saw(roar_f, 1.0) + noise(1.0) * 0.3, ((500, 1.0), (900, 0.8), (2400, 0.3))) * env_adsr(1.0, 0.08, 0.2, 0.7, 0.5) * 2, 2.5)
     S['roar'] = roar
     trumpet_f = np.concatenate([np.linspace(300, 520, int(0.25 * SR)), np.linspace(520, 380, int(0.6 * SR))])
     trumpet = formant(saw(trumpet_f, 0.85) + noise(0.85) * 0.2, ((800, 1), (1600, 0.6), (3000, 0.3))) * env_adsr(0.85, 0.05, 0.2, 0.7, 0.3)
     S['death_big'] = mix((trumpet, 0.6), (thud(60, 0.7, 0.5), 1.0), (lowpass(noise(0.6, 'brown'), 300) * env_exp(0.6, 0.2), 0.6))
+    roar2_f = np.linspace(95, 55, int(0.9 * SR))
+    roar2 = distort(formant(saw(roar2_f, 0.9) + noise(0.9) * 0.25, ((450, 1.0), (800, 0.7), (2200, 0.25))) * env_adsr(0.9, 0.04, 0.2, 0.7, 0.45) * 2, 2.2)
+    S['death_big2'] = mix((roar2, 0.6), (thud(55, 0.8, 0.6), 1.0), (lowpass(noise(0.7, 'brown'), 250) * env_exp(0.7, 0.25), 0.6))
     # ---- economy & UI
     S['coin'] = mix((ping(1975, 0.25, 0.06), 0.6), (np.pad(ping(2637, 0.3, 0.09), (int(0.05 * SR), 0)), 0.6))
     coins = np.zeros(int(0.9 * SR))

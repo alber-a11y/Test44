@@ -232,11 +232,12 @@ input[type=range].slider::-moz-range-thumb { width: calc(var(--u) * 5.4); height
 .bm-btn { width: calc(var(--u) * 13.5); height: calc(var(--u) * 13.5); border-radius: 50%; padding: 0; border: calc(var(--u) * 0.6) solid #1a1222; background: radial-gradient(circle at 40% 30%, #6b5a86, #2b2338 70%); box-shadow: inset 0 0 0 calc(var(--u) * 0.45) #c99a3a, 0 calc(var(--u) * 0.7) 0 #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .bm-btn img { width: 92%; height: 92%; object-fit: contain; margin-top: 8%; }
 .bm-btn .ico { width: 64%; height: 64%; }
-.bm-btn.disabled { filter: grayscale(0.9) brightness(0.65); }
+.bm-btn.disabled img, .bm-btn.disabled .ico { filter: grayscale(0.9) brightness(0.6); }
+.bm-btn.disabled { background: radial-gradient(circle at 40% 30%, #4a4256, #221c2c 70%); }
 .bm-btn.special { background: radial-gradient(circle at 40% 30%, #9a68e0, #3a1f6a 70%); }
 .bm-btn.sell { background: radial-gradient(circle at 40% 30%, #ff8a7a, #8a1a10 70%); }
-.bm-price { margin-top: calc(var(--u) * -2); display: flex; align-items: center; gap: calc(var(--u) * 0.4); padding: 0 calc(var(--u) * 1.2); border-radius: calc(var(--u) * 2); background: #1a1222; border: calc(var(--u) * 0.35) solid #c99a3a; font: 400 calc(var(--u) * 2.6) var(--font-head); color: #ffe066; white-space: nowrap; }
-.bm-price.no { color: #ff7060; }
+.bm-price { position: relative; z-index: 3; margin-top: calc(var(--u) * -2); display: flex; align-items: center; gap: calc(var(--u) * 0.4); padding: 0 calc(var(--u) * 1.2); border-radius: calc(var(--u) * 2); background: #1a1222; border: calc(var(--u) * 0.35) solid #c99a3a; font: 400 calc(var(--u) * 2.6) var(--font-head); color: #ffe066; white-space: nowrap; }
+.bm-price.no { color: #ff8a7a; border-color: #ff6a50; background: #3a0e0e; }
 .bm-price .ico { width: calc(var(--u) * 3); height: calc(var(--u) * 3); }
 .bm-label { margin-top: calc(var(--u) * 0.5); font: 400 calc(var(--u) * 2.1) var(--font-head); text-shadow: 0 2px 0 #000, 0 0 4px #000; white-space: nowrap; }
 .bm-info { position: absolute; left: 50%; top: calc(var(--u) * 20); transform: translateX(-50%); width: calc(var(--u) * 52); padding: calc(var(--u) * 1.6) calc(var(--u) * 2); font-size: calc(var(--u) * 2.4); text-align: center; pointer-events: none; }
