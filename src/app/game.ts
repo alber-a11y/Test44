@@ -24,6 +24,7 @@ export type Modal =
   | { type: 'pause' }
   | { type: 'convoy'; gold: number }
   | { type: 'daily' }
+  | { type: 'wheel' }
   | { type: 'confirm'; text: string; onYes: () => void };
 
 export const screen = signal<Screen>('loading');
@@ -359,7 +360,7 @@ export async function refreshSpell(id: string) {
 // Shop / meta actions
 
 export function spend(cost: number): boolean {
-  if (profile.value.coins < cost) { Audio.sfx('error'); showToast(t('not_enough').replace(t('gold').toLowerCase(), t('coins').toLowerCase())); return false; }
+  if (profile.value.coins < cost) { Audio.sfx('error'); showToast(t('not_enough_coins')); return false; }
   updateProfile((p) => (p.coins -= cost));
   Audio.sfx('upgrade');
   return true;
@@ -417,3 +418,43 @@ export async function claimDaily(x2: boolean) {
 }
 
 addEventListener('beforeunload', () => persist());
+
+// -------------------------------------------------------------------------------------------------
+// Fortune wheel: one free spin per day + extra spins for rewarded ads
+
+export interface WheelPrize { kind: 'coins' | 'item' | 'booster' | 'unique'; id: string; amount: number; weight: number }
+export const WHEEL: WheelPrize[] = [
+  { kind: 'coins', id: 'coins', amount: 100, weight: 26 },
+  { kind: 'item', id: 'freeze', amount: 2, weight: 14 },
+  { kind: 'coins', id: 'coins', amount: 250, weight: 16 },
+  { kind: 'booster', id: 'purse', amount: 1, weight: 12 },
+  { kind: 'item', id: 'dynamite', amount: 2, weight: 12 },
+  { kind: 'coins', id: 'coins', amount: 600, weight: 6 },
+  { kind: 'item', id: 'goldrush', amount: 2, weight: 10 },
+  { kind: 'unique', id: 'unique', amount: 1, weight: 4 },
+];
+export const WHEEL_AD_SPINS = 3;
+
+/** Picks a prize, applies it and returns its index (for the animation). */
+export async function spinWheel(withAd: boolean): Promise<number | null> {
+  const p = profile.value;
+  if (withAd) {
+    if ((p.daily.adSpins ?? 0) >= WHEEL_AD_SPINS) return null;
+    const ok = await AdService.showRewarded('wheel_spin');
+    if (!ok) { showToast(t('ad_unavailable')); return null; }
+  } else if (p.daily.spin) return null;
+  const total = WHEEL.reduce((a, b) => a + b.weight, 0);
+  let r = Math.random() * total, idx = 0;
+  for (; idx < WHEEL.length - 1; idx++) { r -= WHEEL[idx].weight; if (r <= 0) break; }
+  const prize = WHEEL[idx];
+  const uniqueTarget = UNIQUES.find((u) => !isUniqueOwned(u.id));
+  updateProfile((d) => {
+    if (withAd) { d.daily.adSpins = (d.daily.adSpins ?? 0) + 1; d.stats.ads++; } else d.daily.spin = true;
+    if (prize.kind === 'coins') d.coins += prize.amount;
+    else if (prize.kind === 'item') d.consumables[prize.id] = (d.consumables[prize.id] ?? 0) + prize.amount;
+    else if (prize.kind === 'booster') d.boosters[prize.id] = (d.boosters[prize.id] ?? 0) + prize.amount;
+    else if (uniqueTarget) d.uniques[uniqueTarget.id] = Math.min(uniqueTarget.views, (d.uniques[uniqueTarget.id] ?? 0) + 1);
+    else d.coins += 1000;
+  });
+  return idx;
+}

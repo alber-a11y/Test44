@@ -52,6 +52,7 @@ const ru: Dict = {
   controls: 'Управление', controls_pc: 'ПК: ЛКМ — строить и вести героя, WASD/стрелки — герой, колесо — зум, перетаскивание — камера, Q/E — умения героя, 1-3 — заклинания, 4-7 — припасы, Пробел — пауза, F — скорость, N — волна, Esc — отмена.', controls_mobile: 'Телефон: тап — строить и вести героя, свайп — камера, щипок — зум.',
   reset: 'Сбросить прогресс', reset_confirm: 'Точно сбросить весь прогресс?', yes: 'Да', no: 'Нет', credits: 'Модели: KayKit (Kay Lousberg, CC0). Музыка и звуки сгенерированы.',
   // daily
+  wheel: 'Колесо фортуны', spin: 'Крутить', spin_free: 'Бесплатно!', spins_left: 'Ещё вращений за рекламу: {n}', prize: 'Приз', unique_step: '+1 к уникальному', not_enough_coins: 'Не хватает монет',
   daily_title: 'Ежедневная награда', daily_day: 'День {n}', claim: 'Забрать', claim_x2: 'x2 за рекламу',
   // tips
   tip_build: 'Нажмите на каменную площадку, чтобы построить башню.', tip_wave: 'Нажмите на флаг у дороги, чтобы начать волну раньше и получить бонус.', tip_hero: 'Нажмите на землю — герой пойдёт туда. Он собирает монеты (+25%)!', tip_upgrade: 'Нажмите на башню, чтобы улучшить её.',
@@ -105,6 +106,7 @@ const en: Dict = {
   music: 'Music', sfx: 'Sound', quality: 'Graphics', q_auto: 'Auto', q_low: 'Low', q_medium: 'Medium', q_high: 'High', language: 'Language', lang_auto: 'Auto', vibration: 'Vibration', on: 'On', off: 'Off',
   controls: 'Controls', controls_pc: 'PC: LMB — build & move hero, WASD/arrows — hero, wheel — zoom, drag — camera, Q/E — hero skills, 1-3 — spells, 4-7 — supplies, Space — pause, F — speed, N — wave, Esc — cancel.', controls_mobile: 'Phone: tap — build & move hero, swipe — camera, pinch — zoom.',
   reset: 'Reset progress', reset_confirm: 'Really reset all progress?', yes: 'Yes', no: 'No', credits: 'Models: KayKit (Kay Lousberg, CC0). Music & sound generated.',
+  wheel: 'Wheel of Fortune', spin: 'Spin', spin_free: 'Free!', spins_left: 'Ad spins left: {n}', prize: 'Prize', unique_step: '+1 unique progress', not_enough_coins: 'Not enough coins',
   daily_title: 'Daily reward', daily_day: 'Day {n}', claim: 'Claim', claim_x2: 'x2 for an ad',
   tip_build: 'Tap a stone pad to build a tower.', tip_wave: 'Tap the flag by the road to start the wave early for bonus gold.', tip_hero: 'Tap the ground to move your hero. Heroes collect coins (+25%)!', tip_upgrade: 'Tap a tower to upgrade it.',
   tip_runner: 'Raiders are fast. Place towers near the road entrance.', tip_ballista: 'New tower: Ballista! Its bolt pierces the whole column.', tip_turtle: 'Shieldbearers form a "turtle": arrows bounce off front shields. Hit them from the flanks or with catapults!', tip_plot: 'Plots with a price can be bought to open new tower spots.', tip_meteor: 'New spell: Meteor!',

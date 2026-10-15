@@ -182,6 +182,12 @@ function CoinsTab() {
         <AdBtn class={freeLeft > 0 ? 'pulse' : ''} disabled={freeLeft <= 0} onClick={watchForCoins}>+{amount}</AdBtn>
       </div>
       <div class="card panel">
+        <div class="ico-big"><SPELL_ICONS.starfall /></div>
+        <h3>{t('wheel')}</h3>
+        <p>{t('spins_left', { n: Math.max(0, 3 - (p.daily.adSpins ?? 0)) })}</p>
+        <Btn class="gold" onClick={() => (modal.value = { type: 'wheel' })}>{t('spin')}</Btn>
+      </div>
+      <div class="card panel">
         <div class="ico-big"><IcoChest /></div>
         <h3>{t('daily_chest')}</h3>
         <p>{t('daily_chest_desc')}</p>

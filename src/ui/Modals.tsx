@@ -11,12 +11,14 @@ import { thumbs } from '../render/Thumbs';
 import { AdBtn, Btn, ModalFrame, Price, Stars } from './common';
 import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy } from './icons';
 import { Audio } from '../audio/AudioManager';
+import { WheelModal } from './Wheel';
 
 export function Modals() {
   const m = modal.value;
   if (!m) return null;
   switch (m.type) {
     case 'prelevel': return <PreLevel level={m.level} />;
+    case 'wheel': return <WheelModal />;
     case 'victory': return <Victory m={m} />;
     case 'defeat': return <Defeat m={m} />;
     case 'pause': return (

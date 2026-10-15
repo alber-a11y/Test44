@@ -16,7 +16,7 @@ export interface SaveData {
   boosters: Record<string, number>;
   uniques: Record<string, number>;
   settings: { music: number; sfx: number; quality: QualitySetting; lang: 'ru' | 'en' | 'auto'; vibration: boolean };
-  daily: { day: string; streak: number; claimed: boolean; freeCoins: number; spin: boolean; chest: boolean };
+  daily: { day: string; streak: number; claimed: boolean; freeCoins: number; spin: boolean; chest: boolean; adSpins?: number };
   stats: { kills: number; played: number; won: number; ads: number };
   endlessBest: number;
   tipsSeen: string[];
@@ -106,6 +106,6 @@ export function rollDaily() {
     const y = new Date(); y.setDate(y.getDate() - 1);
     const yesterday = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
     p.daily.streak = p.daily.day === yesterday && p.daily.claimed ? p.daily.streak + 1 : 0;
-    p.daily = { ...p.daily, day: d, claimed: false, freeCoins: 0, spin: false, chest: false };
+    p.daily = { ...p.daily, day: d, claimed: false, freeCoins: 0, spin: false, chest: false, adSpins: 0 };
   });
 }

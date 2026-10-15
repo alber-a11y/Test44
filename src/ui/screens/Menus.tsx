@@ -3,7 +3,7 @@ import { t } from '../../app/i18n';
 import { profile } from '../../app/save';
 import { goMap, goMenu, goShop, goForge, goSettings, openLevel, loadProgress, modal } from '../../app/game';
 import { Btn, CoinChip, StarChip, BackBtn, Stars } from '../common';
-import { IcoGear, IcoHammer, IcoShop, IcoMap, IcoChest, IcoInfinity, IcoLock, IcoSkull } from '../icons';
+import { IcoGear, IcoHammer, IcoShop, IcoMap, IcoChest, IcoInfinity, IcoLock, IcoSkull, IcoStarfall } from '../icons';
 import { LEVEL_COUNT } from '../../levels/levels';
 import { BOSSES, biomeFor } from '../../levels/generator';
 import { Rng } from '../../sim/rng';
@@ -45,7 +45,9 @@ export function MainMenu() {
             {shopNotif > 0 && <i class="notif">{shopNotif}</i>}
           </Btn>
           <Btn class="menu-tile red" onClick={goForge}><IcoHammer /><span>{t('forge')}</span></Btn>
-          {!p.daily.claimed && <Btn class="menu-tile purple" onClick={() => (modal.value = { type: 'daily' })}><IcoChest /><span>{t('daily_title').split(' ')[0]}</span><i class="notif">!</i></Btn>}
+          {!p.daily.claimed
+            ? <Btn class="menu-tile purple" onClick={() => (modal.value = { type: 'daily' })}><IcoChest /><span>{t('daily_title').split(' ')[0]}</span><i class="notif">!</i></Btn>
+            : <Btn class="menu-tile purple" onClick={() => (modal.value = { type: 'wheel' })}><IcoStarfall /><span>{t('wheel').split(' ')[0]}</span>{!p.daily.spin && <i class="notif">!</i>}</Btn>}
         </div>
       </div>
     </div>
