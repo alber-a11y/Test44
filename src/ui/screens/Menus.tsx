@@ -66,7 +66,7 @@ const BIOME_BG: Record<string, [string, string]> = {
 export function LevelMap() {
   const p = profile.value;
   const ref = useRef<HTMLDivElement>(null);
-  const W = Math.min(innerWidth, 620);
+  const W = Math.min(innerWidth, 900);
   const step = Math.max(84, Math.min(118, W * 0.2));
   const H = step * (LEVEL_COUNT + 2) + 260;
   const layout = useMemo(() => {

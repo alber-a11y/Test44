@@ -85,6 +85,7 @@ export async function boot() {
   engine = new Engine(document.body);
   document.body.insertBefore(engine.canvas, app);
   engine.setQuality(resolveQuality());
+  if (import.meta.env.DEV) (window as any).__engine = engine;
   textLayer = document.createElement('div');
   textLayer.className = 'text-layer';
   document.body.insertBefore(textLayer, app);
@@ -200,6 +201,7 @@ export async function startLevel(level: number, boosters: string[]) {
   session = new GameSession(engine, def, buildLoadout(boosters), textLayer, {
     onEnd: (r, w) => onBattleEnd(r, w),
     onConvoy: () => openConvoy(),
+    onConvoyAppear: () => showToast(t('convoy'), 2500),
   });
   screen.value = 'battle';
   Audio.playMusic(def.biome as MusicName);

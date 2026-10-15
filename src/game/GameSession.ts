@@ -15,6 +15,7 @@ const STEP = 1 / 60;
 export interface SessionCallbacks {
   onEnd(result: 'victory' | 'defeat', world: World): void;
   onConvoy(): void;
+  onConvoyAppear?(): void;
 }
 
 /** One battle: simulation + view + input + HUD bridge. */
@@ -132,7 +133,7 @@ export class GameSession {
           setTimeout(() => (bossBanner.value = null), 3500);
         }
         break;
-      case 'convoy': sfx('coins', 0.6); this.cb.onConvoy(); break;
+      case 'convoy': sfx('coins', 0.6); this.cb.onConvoyAppear?.(); break;
       case 'phoenix': sfx('roar', 1); break;
       case 'unitDeath': if (e.hero) sfx('death_big', 0.6); break;
       case 'victory':
