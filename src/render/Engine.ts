@@ -67,6 +67,9 @@ export class Engine {
     this.envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
     addEventListener('resize', () => this.resize());
+    // mobile browsers may drop the GL context when backgrounded: recover with a reload
+    this.canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.paused = true; }, false);
+    this.canvas.addEventListener('webglcontextrestored', () => location.reload(), false);
   }
 
   setQuality(q: Quality) {
