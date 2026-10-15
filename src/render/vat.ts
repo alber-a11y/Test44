@@ -8,7 +8,11 @@ import { Assets, type CharKey } from './Assets';
  * so hundreds of animated soldiers cost one draw call per unit type.
  */
 
-export interface ClipSpec { name: string; frames: number; loop: boolean; fps?: number }
+export interface ClipSpec {
+  name: string; frames: number; loop: boolean; fps?: number;
+  /** mounted variant: upper body plays `name`, hips and legs hold a straddling saddle pose */
+  ride?: boolean;
+}
 export interface BakedClip { start: number; count: number; loop: boolean; fps: number; duration: number }
 
 export interface VatModel {
@@ -22,6 +26,8 @@ export interface VatModel {
   height: number;
   radius: number;
   map: THREE.Texture | null;
+  /** model-space height of the hips in the riding pose (where the saddle should be) */
+  seatY?: number;
 }
 
 export interface CharVariantSpec {
@@ -92,6 +98,36 @@ function hsl2rgb(h: number, s: number, l: number): [number, number, number] {
 
 interface PartRef { mesh: THREE.Mesh; skinned: boolean; offset: number; count: number }
 
+const LEG_BONES = new Set(['hips', 'upperlegl', 'upperlegr', 'lowerlegl', 'lowerlegr', 'footl', 'footr', 'toesl', 'toesr']);
+const boneOf = (track: THREE.KeyframeTrack) => THREE.PropertyBinding.parseTrackName(track.name).nodeName;
+
+/** Upper body from `src`, hips + legs from the chair-sitting pose (hips pulled back over the feet). */
+function rideClip(src: THREE.AnimationClip, all: THREE.AnimationClip[]): THREE.AnimationClip {
+  const sit = all.find((a) => a.name === 'Sit_Chair_Idle');
+  if (!sit) return src;
+  const tracks = src.tracks.filter((tr) => !LEG_BONES.has(boneOf(tr)));
+  for (const tr of sit.tracks) {
+    if (!LEG_BONES.has(boneOf(tr))) continue;
+    const c = tr.clone();
+    if (boneOf(c) === 'hips' && c.name.endsWith('.position')) for (let i = 2; i < c.values.length; i += 3) c.values[i] = 0;
+    tracks.push(c);
+  }
+  return new THREE.AnimationClip(src.name + '_ride', src.duration, tracks);
+}
+
+const _splay = new THREE.Quaternion();
+const _yAxis = new THREE.Vector3(0, 1, 0);
+const _down = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.35);
+/** Spread the sitting thighs apart and angle them down so they straddle the horse's barrel. */
+function splayLegs(root: THREE.Object3D) {
+  for (const [name, side] of [['upperlegl', 1], ['upperlegr', -1]] as const) {
+    const b = root.getObjectByName(name);
+    if (!b) continue;
+    _splay.setFromAxisAngle(_yAxis, side * 1.25).multiply(_down);
+    b.quaternion.premultiply(_splay);
+  }
+}
+
 /** Bake a KayKit character into a VatModel. */
 export function bakeCharacter(spec: CharVariantSpec): VatModel {
   const gltf = Assets.chars.get(spec.char)!;
@@ -138,13 +174,15 @@ export function bakeCharacter(spec: CharVariantSpec): VatModel {
   const clips: Record<string, BakedClip> = {};
   let frameRow = 0;
   let minY = Infinity, maxY = -Infinity, maxR = 0;
+  let seatY: number | undefined;
   const restPos = new Float32Array(vCount * 3);
   const restNrm = new Float32Array(vCount * 3);
 
   for (const name of clipNames) {
     const cs = spec.clips[name];
-    const clip = gltf.animations.find((a) => a.name === cs.name);
-    if (!clip) throw new Error(`clip ${cs.name} missing on ${spec.char}`);
+    const src = gltf.animations.find((a) => a.name === cs.name);
+    if (!src) throw new Error(`clip ${cs.name} missing on ${spec.char}`);
+    const clip = cs.ride ? rideClip(src, gltf.animations) : src;
     mixer.stopAllAction();
     resetPose();
     const action = mixer.clipAction(clip);
@@ -155,6 +193,8 @@ export function bakeCharacter(spec: CharVariantSpec): VatModel {
       const t = cs.loop ? (f / cs.frames) * dur : (f / Math.max(1, cs.frames - 1)) * dur;
       action.time = Math.min(t, dur - 1e-4);
       mixer.update(0);
+      if (cs.ride) splayLegs(root);
+      if (cs.ride && seatY === undefined) { root.updateMatrixWorld(true); seatY = root.getObjectByName('hips')?.getWorldPosition(_v).y; }
       root.updateMatrixWorld(true);
       for (const p of parts) writePart(p, frameRow + f);
     }
@@ -216,7 +256,9 @@ export function bakeCharacter(spec: CharVariantSpec): VatModel {
   let tex: THREE.Texture | null = map;
   if (map && spec.recolor) tex = recolorTexture(map, spec.recolor, JSON.stringify(spec.recolor));
 
-  return finishModel(spec.key, restPos, restNrm, uv, indices, posData, nrmData, width, rowsPerFrame, texH, clips, maxY - Math.min(0, minY), maxR, tex);
+  const model = finishModel(spec.key, restPos, restNrm, uv, indices, posData, nrmData, width, rowsPerFrame, texH, clips, maxY - Math.min(0, minY), maxR, tex);
+  model.seatY = seatY;
+  return model;
 }
 
 export function finishModel(

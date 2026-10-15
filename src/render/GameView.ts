@@ -10,7 +10,7 @@ import { Particles } from './Particles';
 import { NOISE_GLSL } from './glsl';
 import { CameraRig } from './CameraRig';
 import { VatCrowd } from './vat';
-import { CHAR_SCALE, getUnitModel, UNIT_SPECS, HORSE_SADDLE_Y } from './units';
+import { CHAR_SCALE, getUnitModel, UNIT_SPECS, HORSE_SADDLE_Y, HORSE_BACK_Y } from './units';
 import { TowerVisual } from './TowerVisual';
 import { Assets } from './Assets';
 import {
@@ -650,10 +650,14 @@ export class GameView {
       const ht = clip === 'walk' ? this.time : t;
       horse.push(u.x, 0, u.z, u.face, 1.15, hclip, ht, fl, fl, fl);
       const dead = clip === 'death';
-      const rclip = dead ? 'death' : clip === 'walk' ? 'idle' : clip;
-      const ry = dead ? Math.max(0, HORSE_SADDLE_Y * 1.15 - t * 1.6) : HORSE_SADDLE_Y * 1.15 - 0.3 + (hclip === 'walk' ? Math.abs(Math.sin(this.time * Math.PI * 2 / 0.55 * 2)) * 0.05 : 0);
-      // rider sits behind the withers so the horse's head never covers him
-      const bx = -Math.sin(u.face) * 0.28, bz = -Math.cos(u.face) * 0.28;
+      const base = dead ? 'death' : clip === 'walk' ? 'idle' : clip;
+      const rclip = !dead && ('ride_' + base) in c.model.clips ? 'ride_' + base : base;
+      // seat the rider's hips on the horse's back (the riding pose straddles the barrel)
+      const rs = 1.08 * c.baseScale;
+      const seat = HORSE_BACK_Y * 1.15 - (c.model.seatY ?? 0.6) * rs;
+      const gallop = hclip === 'walk' ? Math.abs(Math.sin(this.time * Math.PI * 2 / 0.55 * 2)) * 0.05 : 0;
+      const ry = dead ? Math.max(0, seat - t * 1.6) : seat + gallop;
+      const bx = -Math.sin(u.face) * 0.12, bz = -Math.cos(u.face) * 0.12;
       c.push(u.x + bx, ry, u.z + bz, u.face, 1.08, rclip, t, fl, fl, fl);
       if (!dead) bar(u.x, HORSE_SADDLE_Y * 1.15 + c.model.height * c.baseScale + 0.1, u.z, 1.1, u.hp / u.maxHp, 0.25, 0.8, 0.3);
       return;

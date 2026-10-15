@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Assets } from '../render/Assets';
 import { bakeCharacter, VatCrowd } from '../render/vat';
+import { getUnitModel, CHAR_SCALE, HORSE_BACK_Y } from '../render/units';
 
 export async function runViewer() {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -23,6 +24,34 @@ export async function runViewer() {
   scene.add(ground);
   await Assets.load();
   const mode = new URLSearchParams(location.search).get('viewer');
+  if (mode === 'rider') {
+    // mounted heroes, same placement as GameView (?viewer=rider&clip=ride_attack&angle=1.2)
+    const q = new URLSearchParams(location.search);
+    const horse = new VatCrowd(getUnitModel('horse'), 8, 1);
+    scene.add(horse.mesh);
+    const heroes = ['hero_ranger', 'hero_paladin', 'hero_sorceress', 'hero_jarl'].map((k) => new VatCrowd(getUnitModel(k), 2, CHAR_SCALE));
+    for (const h of heroes) scene.add(h.mesh);
+    const face = +(q.get('face') ?? 0.9);
+    const a = +(q.get('angle') ?? 0.6);
+    cam.position.set(Math.sin(a) * 9, 4.5, Math.cos(a) * 9);
+    cam.lookAt(0, 1, 0);
+    renderer.setAnimationLoop(() => {
+      horse.begin();
+      heroes.forEach((c, i) => {
+        const x = (i - 1.5) * 2.2;
+        if (!q.has('nohorse')) horse.push(x, 0, 0, face, 1.15, 'idle', 0);
+        const rs = 1.08 * c.baseScale;
+        const y = HORSE_BACK_Y * 1.15 - (c.model.seatY ?? 0.6) * rs;
+        c.begin();
+        const clip = q.get('clip') ?? 'ride_idle';
+        c.push(x - Math.sin(face) * 0.12, y, -Math.cos(face) * 0.12, face, 1.08, clip in c.model.clips ? clip : 'ride_idle', +(q.get('t') ?? 0));
+        c.end();
+      });
+      horse.end();
+      renderer.render(scene, cam);
+    });
+    return;
+  }
   if (mode === 'kit') {
     let i = 0;
     const keys = [...Assets.kit.keys()];

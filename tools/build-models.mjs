@@ -117,7 +117,7 @@ const SKEL = `${SRC}/skel/addons/kaykit_character_pack_skeletons/Characters/gltf
 const ANIMS = [
   'Idle', 'Walking_A', 'Walking_D_Skeletons', 'Running_A',
   '1H_Melee_Attack_Chop', '2H_Melee_Attack_Chop', '1H_Ranged_Shoot', '2H_Ranged_Shoot',
-  'Spellcast_Shoot', 'Death_A', 'Cheer', 'Blocking',
+  'Spellcast_Shoot', 'Death_A', 'Cheer', 'Blocking', 'Sit_Chair_Idle',
 ];
 const CHARS = {
   knight: `${ADV}/Knight.glb`,
@@ -177,7 +177,8 @@ async function buildChars() {
   for (const [key, file] of Object.entries(CHARS)) {
     const doc = await io.read(file);
     for (const a of doc.getRoot().listAnimations()) {
-      if (!ANIMS.includes(a.getName())) disposeAnimation(a);
+      // the riding pose is only needed by hero characters (mounted on the horse)
+      if (!ANIMS.includes(a.getName()) || (key.startsWith('skel') && a.getName().startsWith('Sit_'))) disposeAnimation(a);
     }
     stripStaticChannels(doc);
     await doc.transform(resample({ tolerance: 1e-3 }), dedup(), prune(), weld(), meshopt({ encoder: MeshoptEncoder, level: 'medium' }));

@@ -26,6 +26,13 @@ function allyClips(attack: string): Record<string, ClipSpec> {
   return { walk: W('Running_A', 10), attack: W(attack, 8), death: ONCE('Death_A', 10), idle: W('Idle', 6), cheer: W('Cheer', 8) };
 }
 
+/** Hero clips plus mounted (`ride_*`) variants of idle and every attack. */
+function heroClips(attack: string, extra: Record<string, ClipSpec> = {}): Record<string, ClipSpec> {
+  const base: Record<string, ClipSpec> = { ...allyClips(attack), ...extra };
+  for (const k of ['idle', 'attack', ...Object.keys(extra)]) base['ride_' + k] = { ...base[k], ride: true };
+  return base;
+}
+
 type CharDef = Omit<CharVariantSpec, 'key'>;
 const C = (char: CharKey, keep: string[], clips: Record<string, ClipSpec>, recolor?: Recolor, scaleParts?: Record<string, number>): CharDef => ({ char, keep, clips, recolor, scaleParts });
 
@@ -55,10 +62,10 @@ export const UNIT_SPECS: Record<string, CharDef | { procedural: 'elephant' | 'rh
   footman_blue: C('knight', ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], allyClips('1H_Melee_Attack_Chop'), BLUE_FROM_RED),
   knight_blue: C('knight', ['1H_Sword', 'Badge_Shield', 'Knight_Helmet', 'Knight_Cape'], allyClips('1H_Melee_Attack_Chop'), BLUE_FROM_RED, { Badge_Shield: 1.2 }),
   pikeman_blue: C('knight', ['2H_Sword', 'Knight_Helmet', 'Knight_Cape'], allyClips('2H_Melee_Attack_Chop'), BLUE_FROM_RED),
-  hero_ranger: C('rogue', ['1H_Crossbow', 'Rogue_Cape'], { ...allyClips('1H_Ranged_Shoot'), shoot: W('1H_Ranged_Shoot', 8) }, BLUE_FROM_GREEN),
-  hero_paladin: C('knight', ['1H_Sword', 'Badge_Shield', 'Knight_Helmet', 'Knight_Cape'], allyClips('1H_Melee_Attack_Chop'), { hues: [[330, 20]], to: 46, satMul: 1.3, lightMul: 1.15 }),
-  hero_sorceress: C('mage', ['2H_Staff', 'Mage_Hat', 'Mage_Cape'], { ...allyClips('Spellcast_Shoot'), cast: W('Spellcast_Shoot', 8) }, BLUE_FROM_PURPLE),
-  hero_jarl: C('barbarian', ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'], allyClips('2H_Melee_Attack_Chop'), GOLD_FROM_BLUE),
+  hero_ranger: C('rogue', ['1H_Crossbow', 'Rogue_Cape'], heroClips('1H_Ranged_Shoot', { shoot: W('1H_Ranged_Shoot', 8) }), BLUE_FROM_GREEN),
+  hero_paladin: C('knight', ['1H_Sword', 'Badge_Shield', 'Knight_Helmet', 'Knight_Cape'], heroClips('1H_Melee_Attack_Chop'), { hues: [[330, 20]], to: 46, satMul: 1.3, lightMul: 1.15 }),
+  hero_sorceress: C('mage', ['2H_Staff', 'Mage_Hat', 'Mage_Cape'], heroClips('Spellcast_Shoot', { cast: W('Spellcast_Shoot', 8) }), BLUE_FROM_PURPLE),
+  hero_jarl: C('barbarian', ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'], heroClips('2H_Melee_Attack_Chop'), GOLD_FROM_BLUE),
   tower_archer: C('rogue', ['2H_Crossbow', 'Rogue_Cape'], { idle: W('Idle', 6), shoot: W('2H_Ranged_Shoot', 8) }, BLUE_FROM_GREEN),
   tower_mage: C('mage', ['2H_Staff', 'Mage_Hat', 'Mage_Cape'], { idle: W('Idle', 6), shoot: W('Spellcast_Shoot', 8) }, BLUE_FROM_PURPLE),
   villager: C('barbarian', ['Mug'], { idle: W('Idle', 6), cheer: W('Cheer', 8), walk: W('Walking_A', 12) }, BLUE_STRONG),
@@ -296,6 +303,8 @@ function buildBody(key: string, kind: 'elephant' | 'rhino' | 'mammoth'): VatMode
 // War horse for the hero (front +Z). Height to the saddle ≈ 1.05 units.
 
 export const HORSE_SADDLE_Y = 1.0;
+/** top of the horse's back (unscaled), where the rider's hips rest */
+export const HORSE_BACK_Y = 1.2;
 
 function buildHorse(key: string): VatModel {
   type Pose = (clip: string, t: number, m: THREE.Matrix4) => void;
