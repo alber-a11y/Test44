@@ -45,6 +45,11 @@ def main():
         from sfx import build_all
         for name, data in build_all().items():
             write_mp3(name, fade(normalize(data, 0.85), 0.001, 0.02), '64k')
+    if not only or 'amb' in only:
+        from ambience import AMBIENCE, loopify
+        for name, fn in AMBIENCE.items():
+            x = loopify(fn())
+            write_mp3('amb_' + name, normalize(x, 0.6), '48k')
     if not only or 'music' in only:
         from music import TRACKS
         names = [t for t in TRACKS if not only or t in only or 'music' in only]

@@ -149,6 +149,7 @@ export function goMenu() {
   enterMenuScene();
   screen.value = 'menu';
   Audio.playMusic('menu');
+  Audio.playAmbience('meadow', 0.18);
   const d = profile.value.daily;
   if (!d.claimed) modal.value = { type: 'daily' };
 }
@@ -166,6 +167,7 @@ export function openLevel(level: number) {
 
 function leaveBattle() {
   if (!session) return;
+  Audio.playAmbience('meadow', 0.18);
   session.dispose();
   session = null;
   Platform.gameplayStop();
@@ -206,6 +208,7 @@ export async function startLevel(level: number, boosters: string[]) {
   });
   screen.value = 'battle';
   Audio.playMusic(def.biome as MusicName);
+  Audio.playAmbience(def.biome, 0.4);
   Platform.gameplayStart();
   // endless: periodic interstitials during wave breaks
   if (def.endless) {

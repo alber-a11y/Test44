@@ -127,6 +127,34 @@ class AudioManager {
     }
   }
 
+  private amb: { name: string; src: AudioBufferSourceNode; gain: GainNode } | null = null;
+
+  /** Looping biome ambience on the sfx bus (wind, birds, surf…). */
+  async playAmbience(name: string | null, vol = 0.35) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (this.amb?.name === name) return;
+    const old = this.amb;
+    this.amb = null;
+    if (old) {
+      old.gain.gain.setValueAtTime(old.gain.gain.value, ctx.currentTime);
+      old.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+      old.src.stop(ctx.currentTime + 1.05);
+    }
+    if (!name) return;
+    const buf = await this.load('amb_' + name);
+    if (!buf || this.amb) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    src.connect(g).connect(this.sfxBus);
+    src.start();
+    g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2);
+    this.amb = { name, src, gain: g };
+  }
+
   stopMusic(fade = 0.8) {
     this.wantedMusic = null;
     if (!this.ctx || !this.music) return;
