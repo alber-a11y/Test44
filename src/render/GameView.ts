@@ -111,7 +111,7 @@ export class GameView {
     const ridges = buildRidges(this.field);
     scene.add(ridges.mesh);
     const avoid = [...ridges.occupied, ...level.slots.map((s) => ({ x: s.x, z: s.z, r: 1.7 }))];
-    scene.add(buildDecor(this.field, ridges.occupied));
+    scene.add(buildDecor(this.field, ridges.occupied, { forest: engine.profile.forest, foliageShadows: engine.profile.foliageShadows }));
     this.grass = buildGrass(this.field, engine.profile.grass, avoid);
     scene.add(this.grass.group);
     if (look.water !== undefined) scene.add(this.buildWater(look.water));

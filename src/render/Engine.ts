@@ -18,12 +18,16 @@ export interface QualityProfile {
   grass: number;
   msaa: number;
   particles: number;
+  /** fraction of the surrounding forest to keep */
+  forest: number;
+  /** trees/bushes/rocks cast shadows */
+  foliageShadows: boolean;
 }
 
 export const QUALITY: Record<Quality, QualityProfile> = {
-  low: { dpr: 1, shadows: true, shadowSize: 1024, ao: false, bloom: false, tiltShift: false, grass: 0.2, msaa: 0, particles: 0.5 },
-  medium: { dpr: 1.5, shadows: true, shadowSize: 2048, ao: false, bloom: true, tiltShift: true, grass: 0.55, msaa: 0, particles: 0.8 },
-  high: { dpr: 2, shadows: true, shadowSize: 4096, ao: true, bloom: true, tiltShift: true, grass: 1, msaa: 4, particles: 1 },
+  low: { dpr: 1, shadows: true, shadowSize: 1024, ao: false, bloom: false, tiltShift: false, grass: 0.2, msaa: 0, particles: 0.45, forest: 0.45, foliageShadows: false },
+  medium: { dpr: 1.5, shadows: true, shadowSize: 2048, ao: false, bloom: true, tiltShift: true, grass: 0.55, msaa: 0, particles: 0.8, forest: 0.8, foliageShadows: true },
+  high: { dpr: 2, shadows: true, shadowSize: 4096, ao: true, bloom: true, tiltShift: true, grass: 1, msaa: 4, particles: 1, forest: 1, foliageShadows: true },
 };
 
 export function detectQuality(): Quality {

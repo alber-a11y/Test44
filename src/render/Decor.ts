@@ -17,7 +17,7 @@ export class KitBatch {
     if (!this.items.has(key)) this.items.set(key, []);
     this.items.get(key)!.push({ m, c: color });
   }
-  build(castShadow = true): THREE.Group {
+  build(castShadow = true, foliageShadows = true): THREE.Group {
     const g = new THREE.Group();
     for (const [key, list] of this.items) {
       const custom = customGeometry(key);
@@ -25,7 +25,7 @@ export class KitBatch {
       const im = new THREE.InstancedMesh(geo, custom ? foliageMaterial : Assets.kitMaterial, list.length);
       const white = new THREE.Color(1, 1, 1);
       list.forEach((it, i) => { im.setMatrixAt(i, it.m); im.setColorAt(i, it.c ?? white); });
-      im.castShadow = castShadow;
+      im.castShadow = castShadow && (foliageShadows || (!custom && !key.startsWith('rock') && !key.startsWith('tree')));
       im.receiveShadow = true;
       im.computeBoundingSphere();
       g.add(im);
@@ -47,7 +47,7 @@ function customGeometry(key: string): THREE.BufferGeometry | null {
   return g;
 }
 
-export function buildDecor(field: Field, occupied: { x: number; z: number; r: number }[]) {
+export function buildDecor(field: Field, occupied: { x: number; z: number; r: number }[], opts: { forest?: number; foliageShadows?: boolean } = {}) {
   const rng = new Rng(field.level.seed + 4242);
   const look = field.look;
   const lv = field.level;
@@ -120,7 +120,7 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
     take(x, z, 1.1);
     i++;
   }
-  const ringCount = look.border === 'canyon' || look.border === 'ash' ? 160 : look.border === 'coast' ? 220 : 420;
+  const ringCount = Math.round((look.border === 'canyon' || look.border === 'ash' ? 160 : look.border === 'coast' ? 220 : 420) * (opts.forest ?? 1));
   for (let i = 0, tries = 0; i < ringCount && tries < ringCount * 6; tries++) {
     const x = rng.range(field.minX + 6, -field.minX - 6), z = rng.range(field.minZ + 6, -field.minZ - 6);
     const out = field.outside(x, z);
@@ -169,5 +169,5 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
     take(x, z, 0.4);
   }
 
-  return batch.build();
+  return batch.build(true, opts.foliageShadows ?? true);
 }

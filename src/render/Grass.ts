@@ -116,7 +116,7 @@ transformed.z += wv * k * 0.06;`);
   mesh.frustumCulled = false;
   group.add(mesh);
 
-  if (look.flowers.length && flowerPts.length) {
+  if (look.flowers.length && flowerPts.length && density > 0.3) {
     const fgeo = flowerGeometry();
     const fmat = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide, emissive: 0x222222 });
     fmat.onBeforeCompile = windPatch;
