@@ -3,7 +3,8 @@ import { t } from '../../app/i18n';
 import { profile } from '../../app/save';
 import { goMap, goMenu, goShop, goForge, goSettings, openLevel, loadProgress, modal } from '../../app/game';
 import { Btn, CoinChip, StarChip, BackBtn, Stars } from '../common';
-import { IcoGear, IcoHammer, IcoShop, IcoMap, IcoChest, IcoInfinity, IcoLock, IcoSkull, IcoStarfall } from '../icons';
+import { IcoGear, IcoHammer, IcoShop, IcoMap, IcoChest, IcoInfinity, IcoLock, IcoSkull, IcoStarfall, IcoTrophy } from '../icons';
+import { claimable } from '../../data/achievements';
 import { LEVEL_COUNT } from '../../levels/levels';
 import { BOSSES, biomeFor } from '../../levels/generator';
 import { Rng } from '../../sim/rng';
@@ -31,6 +32,9 @@ export function MainMenu() {
         <CoinChip />
         <StarChip />
         <div class="grow" />
+        <Btn class="round gold" onClick={() => (modal.value = { type: 'achievements' })} style={{ position: 'relative' }}>
+          <IcoTrophy size={30} />{claimable(p) > 0 && <i class="notif">{claimable(p)}</i>}
+        </Btn>
         <Btn class="round gray" onClick={goSettings}><IcoGear size={30} /></Btn>
       </div>
       <div class="logo">{t('title')}<small>{t('subtitle')}</small></div>

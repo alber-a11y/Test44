@@ -21,6 +21,7 @@ export interface SaveData {
   endlessBest: number;
   tipsSeen: string[];
   created: number;
+  achievements?: string[];
 }
 
 const KEY = 'hearthguard.save.v1';

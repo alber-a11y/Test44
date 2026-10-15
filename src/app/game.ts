@@ -25,6 +25,7 @@ export type Modal =
   | { type: 'convoy'; gold: number }
   | { type: 'daily' }
   | { type: 'wheel' }
+  | { type: 'achievements' }
   | { type: 'confirm'; text: string; onYes: () => void };
 
 export const screen = signal<Screen>('loading');

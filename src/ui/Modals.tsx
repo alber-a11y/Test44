@@ -8,6 +8,7 @@ import { getLevel } from '../levels/levels';
 import { ENEMIES } from '../data/enemies';
 import { BOOSTERS, BOOSTER_ORDER } from '../data/items';
 import { HERO_ORDER } from '../data/heroes';
+import { ACHIEVEMENTS } from '../data/achievements';
 import { thumbs } from '../render/Thumbs';
 import { AdBtn, Btn, ModalFrame, Price, Stars } from './common';
 import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy } from './icons';
@@ -20,6 +21,7 @@ export function Modals() {
   switch (m.type) {
     case 'prelevel': return <PreLevel level={m.level} />;
     case 'wheel': return <WheelModal />;
+    case 'achievements': return <Achievements />;
     case 'victory': return <Victory m={m} />;
     case 'defeat': return <Defeat m={m} />;
     case 'pause': return (
@@ -175,3 +177,37 @@ function Defeat({ m }: { m: Extract<NonNullable<typeof modal.value>, { type: 'de
   );
 }
 
+
+function Achievements() {
+  const p = profile.value;
+  const done = p.achievements ?? [];
+  return (
+    <ModalFrame title={t('achievements')} color="gold" onClose={() => (modal.value = null)}>
+      <div class="col" style={{ maxHeight: '62vh', overflowY: 'auto', touchAction: 'pan-y', textAlign: 'left' }}>
+        {ACHIEVEMENTS.map((a) => {
+          const v = Math.min(a.goal, a.value(p));
+          const claimed = done.includes(a.id);
+          const ready = !claimed && v >= a.goal;
+          return (
+            <div key={a.id} class="panel forge-row" style={{ opacity: claimed ? 0.6 : 1 }}>
+              <div class="ico-wrap"><IcoTrophy /></div>
+              <div class="info">
+                <h3>{t('ach_' + a.id)}</h3>
+                <p>{t('achd_' + a.id)}</p>
+                <div style={{ height: 'calc(var(--u)*1.8)', borderRadius: '6px', background: '#1a1222', overflow: 'hidden' }}>
+                  <div style={{ width: `${(v / a.goal) * 100}%`, height: '100%', background: 'linear-gradient(180deg,#ffe066,#e09a10)' }} />
+                </div>
+                <div class="small-t muted">{v}/{a.goal}</div>
+              </div>
+              {claimed ? <Btn class="gray small" disabled>✓</Btn> : (
+                <Btn class={ready ? 'gold small pulse' : 'gray small'} disabled={!ready} onClick={() => { updateProfile((d) => { d.achievements = [...(d.achievements ?? []), a.id]; d.coins += a.reward; }); Audio.sfx('reward'); }}>
+                  <Price value={a.reward} />
+                </Btn>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </ModalFrame>
+  );
+}
