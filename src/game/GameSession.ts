@@ -4,7 +4,7 @@ import { GameView } from '../render/GameView';
 import type { Engine } from '../render/Engine';
 import { Input } from './Input';
 import { hud, selection, targeting, tipQueue, bossBanner, waveBanner, type HudSnapshot } from './hud';
-import { Audio, type SfxName } from '../audio/AudioManager';
+import { Audio, type SfxName, type MusicName } from '../audio/AudioManager';
 import { SPELLS, CONSUMABLE_ORDER, CONSUMABLES } from '../data/items';
 import { HEROES } from '../data/heroes';
 import { profile } from '../app/save';
@@ -31,6 +31,7 @@ export class GameSession {
   private hudT = 0;
   private ended = false;
   private bossAnnounced = false;
+  private calmT = 0;
 
   constructor(public engine: Engine, public level: LevelDef, loadout: Loadout, textLayer: HTMLDivElement, private cb: SessionCallbacks) {
     this.world = new World(level, loadout);
@@ -79,6 +80,14 @@ export class GameSession {
       this.world.events.length = 0;
     }
     this.view.speedK = paused ? 0 : this.speed;
+    // back to the calm theme once a wave is fully cleared
+    const w = this.world;
+    if (!paused && !w.waveSpawning && !w.waitingFirstWave && w.result === 'none' && (Audio.currentMusic?.startsWith('battle_') || Audio.currentMusic === 'boss')) {
+      if (w.enemies.every((e) => e.state === 'dead')) {
+        this.calmT += dt;
+        if (this.calmT > 3) Audio.playMusic(this.level.biome as MusicName, 2.5);
+      } else this.calmT = 0;
+    }
     this.view.update(dt, simDt);
     this.hudT -= dt;
     if (this.hudT <= 0) { this.hudT = 0.1; this.publishHud(); }
@@ -121,6 +130,9 @@ export class GameSession {
       case 'leak': sfx('leak', 0.9); this.view.rig.shake(0.15); this.vibrate(60); break;
       case 'waveStart':
         sfx('horn', 0.8);
+        // switch from the calm build-up theme to the battle theme
+        if (Audio.currentMusic !== 'boss') Audio.playMusic(('battle_' + this.level.biome) as MusicName, 0.8);
+        this.calmT = 0;
         waveBanner.value = e.wave;
         break;
       case 'spawn':

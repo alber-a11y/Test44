@@ -7,7 +7,7 @@ export const SFX = [
 ] as const;
 export type SfxName = (typeof SFX)[number];
 
-export const MUSIC = ['menu', 'meadow', 'canyon', 'coast', 'snow', 'ashlands', 'boss'] as const;
+export const MUSIC = ['menu', 'meadow', 'canyon', 'coast', 'snow', 'ashlands', 'boss', 'battle_meadow', 'battle_canyon', 'battle_coast', 'battle_snow', 'battle_ashlands'] as const;
 export type MusicName = (typeof MUSIC)[number];
 
 interface PlayOpts { vol?: number; rate?: number; jitter?: number }
@@ -101,6 +101,8 @@ class AudioManager {
     src.onended = () => this.active.set(name, Math.max(0, (this.active.get(name) ?? 1) - 1));
     src.start();
   }
+
+  get currentMusic() { return this.wantedMusic; }
 
   async playMusic(name: MusicName, fade = 1.2) {
     this.wantedMusic = name;

@@ -332,7 +332,33 @@ def compose(name):
         T.pad(brass, range(4, 16), -1, 0.22)
         T.melody(brass, range(8, 16), 0, 0.45, 0.1, 0.6, 1)
         return T
+    if name.startswith('battle_'):
+        b = name[7:]
+        cfg = {
+            'meadow': (148, 50, 'dorian', [0, 6, 5, 6, 0, 3, 4, 4], 81),
+            'canyon': (152, 52, 'phrygian', [0, 1, 0, 6, 5, 1, 4, 4], 82),
+            'coast': (146, 55, 'mixolydian', [0, 6, 3, 4, 0, 6, 3, 4], 83),
+            'snow': (144, 57, 'minor', [0, 5, 2, 6, 0, 3, 4, 4], 84),
+            'ashlands': (156, 48, 'harmonic', [0, 5, 3, 4, 0, 1, 6, 4], 85),
+        }[b]
+        bpm, root, mode, prog, seed = cfg
+        T = Track(name, bpm, root, mode, prog, 32, seed, 'war')
+        all_b = range(32)
+        T.drums(all_b, 'war', 0.75)
+        T.timp(all_b, 0.55)
+        T.bass(cello, all_b, (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5), -2, 0.42)
+        T.arp(strings, all_b, [0, 1, 2, 1, 0, 1, 2, 3, 0, 1, 2, 1, 3, 2, 1, 0], 0, 0.22, -0.25, 0.25)
+        T.pad(brass, range(0, 32, 2), -1, 0.16)
+        T.melody(brass, range(4, 16), 0, 0.44, 0.12, 0.7)
+        T.melody(brass, range(20, 32), 0, 0.44, 0.12, 0.75)
+        if b in ('snow', 'ashlands'):
+            T.pad(choir, range(8, 32), 0, 0.14, 0.6)
+        else:
+            T.melody(flute, range(12, 20), 1, 0.3, -0.2, 0.8)
+            T.melody(flute, range(24, 32), 1, 0.3, -0.2, 0.8)
+        return T
     raise ValueError(name)
 
 
-TRACKS = ['menu', 'meadow', 'canyon', 'coast', 'snow', 'ashlands', 'boss']
+TRACKS = ['menu', 'meadow', 'canyon', 'coast', 'snow', 'ashlands', 'boss',
+          'battle_meadow', 'battle_canyon', 'battle_coast', 'battle_snow', 'battle_ashlands']

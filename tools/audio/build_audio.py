@@ -50,8 +50,8 @@ def main():
         for name, fn in AMBIENCE.items():
             x = loopify(fn())
             write_mp3('amb_' + name, normalize(x, 0.6), '48k')
-    if not only or 'music' in only:
-        from music import TRACKS
+    from music import TRACKS
+    if not only or 'music' in only or any(o in TRACKS for o in only):
         names = [t for t in TRACKS if not only or t in only or 'music' in only]
         with Pool(min(len(names), os.cpu_count() or 2)) as p:
             p.map(do_track, names)
