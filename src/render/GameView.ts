@@ -302,7 +302,7 @@ export class GameView {
         break;
       case 'lightning': this.lightning(e.pts); break;
       case 'pulse': P.flames(e.x, e.z, e.r * 0.8); break;
-      case 'death': P.death(e.x, e.z, e.large); if (e.large) this.rig.shake(0.25); break;
+      case 'death': P.death(e.x, e.z, e.large); if (e.large) { this.rig.shake(0.25); this.trophy(e.x, e.z, ENEMIES[e.enemy]?.boss ?? false); } break;
       case 'coin': P.coinBurst(e.x, e.z); break;
       case 'collect': this.text(e.x, 1.2, e.z, '+' + e.value, 'ft-gold'); break;
       case 'income': this.text(e.x, 3, e.z, '+' + e.value, 'ft-gold'); break;
@@ -332,6 +332,33 @@ export class GameView {
         break;
       }
     }
+  }
+
+  /** A small glittering pile of gold (and a fallen banner for bosses) where a giant fell. */
+  private trophies: { obj: THREE.Group; t: number; x: number; z: number }[] = [];
+  private trophy(x: number, z: number, boss: boolean) {
+    const g = new THREE.Group();
+    const pile = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), coinMaterial);
+    pile.scale.set(boss ? 1.6 : 1, boss ? 0.6 : 0.45, boss ? 1.6 : 1);
+    pile.castShadow = true;
+    g.add(pile);
+    for (let i = 0; i < (boss ? 10 : 5); i++) {
+      const c = new THREE.Mesh(makeCoinGeometry(), coinMaterial);
+      const a = Math.random() * Math.PI * 2, d = 0.4 + Math.random() * (boss ? 1.2 : 0.6);
+      c.position.set(Math.cos(a) * d, 0.04, Math.sin(a) * d);
+      c.rotation.set(Math.PI / 2 + (Math.random() - 0.5) * 0.4, 0, Math.random() * 6);
+      g.add(c);
+    }
+    if (boss) {
+      const f = Assets.model('flag_red');
+      f.scale.setScalar(KIT_SCALE * 2.2);
+      f.rotation.z = 1.2;
+      f.position.set(0.6, 0.05, 0.3);
+      g.add(f);
+    }
+    g.position.set(x, 0, z);
+    this.scene.add(g);
+    this.trophies.push({ obj: g, t: boss ? 14 : 7, x, z });
   }
 
   private meteor(x: number, z: number, delay: number) {
@@ -547,6 +574,13 @@ export class GameView {
       if (l.t <= 0) { this.scene.remove(l.line); l.line.geometry.dispose(); this.lightnings.splice(i, 1); }
     }
     (this.rangeDisc.material as THREE.ShaderMaterial).uniforms.uTime.value = this.time;
+    for (let i = this.trophies.length - 1; i >= 0; i--) {
+      const tr = this.trophies[i];
+      tr.t -= simDt;
+      if (Math.random() < simDt * 4) this.particles.emit(tr.x + (Math.random() - 0.5), 0.5, tr.z + (Math.random() - 0.5), { count: 1, velRand: 0.2, up: 0.8, life: [0.4, 0.8], size: [0.5, 0.05], color: 0xffe680, alpha: [1, 0], sprite: 3, additive: true });
+      if (tr.t < 1) tr.obj.scale.setScalar(Math.max(0.001, tr.t));
+      if (tr.t <= 0) { this.scene.remove(tr.obj); this.trophies.splice(i, 1); }
+    }
 
     // floating texts
     for (let i = this.texts.length - 1; i >= 0; i--) {

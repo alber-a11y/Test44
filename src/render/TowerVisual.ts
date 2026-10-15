@@ -14,6 +14,7 @@ export class TowerVisual {
   body: THREE.Object3D | null = null;
   /** local positions where little archers stand */
   archers: THREE.Vector3[] = [];
+  flags: THREE.Object3D[] = [];
   topY = 3;
   fireY = 0;
   private bounce = 0;
@@ -33,6 +34,7 @@ export class TowerVisual {
     this.group.clear();
     this.turret = this.crystal = this.dragon = this.body = null;
     this.archers = [];
+    this.flags = [];
     this.fireY = 0;
     const lvl = t.level;
     const s = [1.8, 2.05, 2.3, 2.5][lvl];
@@ -47,6 +49,7 @@ export class TowerVisual {
     };
     const flag = (y: number, x = 0.55, z = -0.4, sc = 3) => {
       const f = Assets.model('flag_blue');
+      this.flags.push(f);
       f.scale.setScalar(sc);
       f.position.set(x, y, z);
       this.group.add(f);
@@ -134,6 +137,11 @@ export class TowerVisual {
 
   update(dt: number, time: number) {
     const t = this.tower;
+    for (let i = 0; i < this.flags.length; i++) {
+      const f = this.flags[i];
+      f.rotation.y = Math.sin(time * 2.3 + t.id + i) * 0.35;
+      f.rotation.z = Math.sin(time * 3.1 + t.id * 0.7) * 0.05;
+    }
     if (this.turret) {
       const cur = this.turret.rotation.y;
       let diff = t.aim - cur;
