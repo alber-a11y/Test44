@@ -270,64 +270,129 @@ function seeded(seed: number) {
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
 
-/** Layered pine tree, ~1 unit tall at scale 1, vertex coloured. */
+/** Per-vertex colour helper for foliage pieces. */
+function colorize(geo: THREE.BufferGeometry, fn: (x: number, y: number, z: number, c: THREE.Color) => void): THREE.BufferGeometry {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  for (const k of Object.keys(g.attributes)) if (!['position', 'normal'].includes(k)) g.deleteAttribute(k);
+  const pos = g.getAttribute('position');
+  const cols = new Float32Array(pos.count * 3);
+  const c = new THREE.Color();
+  for (let v = 0; v < pos.count; v++) {
+    fn(pos.getX(v), pos.getY(v), pos.getZ(v), c);
+    cols[v * 3] = c.r; cols[v * 3 + 1] = c.g; cols[v * 3 + 2] = c.b;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  return g;
+}
+
+/**
+ * Spruce with real branches: a thin dark core plus tiers of drooping needle "paws"
+ * radiating from the trunk, lighter at the tips. ~1 unit tall at scale 1.
+ */
 export function makePineGeometry(variant: number, snow = false): THREE.BufferGeometry {
   const r = seeded(variant * 7919 + 17);
   const parts: THREE.BufferGeometry[] = [];
-  const trunkH = 0.18 + r() * 0.06;
-  parts.push(paint(new THREE.CylinderGeometry(0.035, 0.055, trunkH + 0.1, 6), 0x5a3a22, T(0, trunkH / 2, 0)));
-  const layers = 4 + Math.floor(r() * 2);
-  const dark = new THREE.Color(0x1f4a2a), light = new THREE.Color(0x4f8a3a), tip = new THREE.Color(0x7aa84a);
-  const snowC = new THREE.Color(0xf4f8fb);
-  for (let i = 0; i < layers; i++) {
-    const k = i / (layers - 1);
-    const radius = (0.36 - k * 0.26) * (0.9 + r() * 0.2);
-    const h = 0.32 - k * 0.1;
-    const y = trunkH + k * 0.72;
-    const g = new THREE.ConeGeometry(radius, h, 8, 1, true);
-    g.translate(0, y + h / 2, 0);
-    const geo = g.toNonIndexed();
-    for (const k2 of Object.keys(geo.attributes)) if (!['position', 'normal'].includes(k2)) geo.deleteAttribute(k2);
-    const pos = geo.getAttribute('position');
-    const cols = new Float32Array(pos.count * 3);
-    const c = new THREE.Color();
-    for (let v = 0; v < pos.count; v++) {
-      const vx = pos.getX(v), vy = pos.getY(v), vz = pos.getZ(v);
-      const rel = (vy - y) / h; // 0 bottom rim .. 1 apex
-      // droop the rim and jitter for a ragged silhouette
-      if (rel < 0.05) {
-        const a = Math.atan2(vz, vx);
-        const j = 0.85 + 0.3 * Math.abs(Math.sin(a * 4.5 + variant + i));
-        pos.setXYZ(v, vx * j, vy - 0.04 * j, vz * j);
-      }
-      c.copy(dark).lerp(light, Math.min(1, rel * 1.2)).lerp(tip, Math.max(0, rel - 0.7) * 1.5);
-      c.multiplyScalar(0.85 + r() * 0.25);
-      if (snow && rel > 0.35) c.lerp(snowC, 0.85);
-      cols[v * 3] = c.r; cols[v * 3 + 1] = c.g; cols[v * 3 + 2] = c.b;
+  const trunkH = 0.16 + r() * 0.05;
+  parts.push(paint(new THREE.CylinderGeometry(0.03, 0.06, 1.0, 6), 0x5a3a22, T(0, 0.5, 0)));
+  const dark = new THREE.Color(0x173d22), mid = new THREE.Color(0x2f6a32), tipC = new THREE.Color(0x77a84a), snowC = new THREE.Color(0xf2f6fa);
+  // inner core so you can't see through the gaps between paws
+  const core = new THREE.ConeGeometry(0.23, 0.85, 7, 1, true);
+  core.translate(0, trunkH + 0.42, 0);
+  parts.push(colorize(core, (_x, y, _z, c) => c.copy(dark).lerp(mid, Math.max(0, (y - trunkH) / 0.9) * 0.5)));
+  const tiers = 7;
+  for (let i = 0; i < tiers; i++) {
+    const k = i / (tiers - 1);
+    const y = trunkH + 0.05 + k * 0.72;
+    const len = (0.4 - k * 0.3) * (0.9 + r() * 0.2);
+    const n = Math.max(4, Math.round(8 - k * 3));
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * Math.PI * 2 + (i % 2) * (Math.PI / n) + (r() - 0.5) * 0.3;
+      // a paw: flattened 3-sided pyramid pointing outwards along +X, drooping down
+      const paw = new THREE.ConeGeometry(0.1 + len * 0.3, len, 3, 1);
+      paw.translate(0, len / 2, 0);
+      paw.rotateZ(-Math.PI / 2 - 0.35 - r() * 0.15);
+      paw.scale(1, 0.45, 1);
+      paw.rotateY(-a);
+      paw.translate(0, y, 0);
+      parts.push(colorize(paw, (x, py, z, c) => {
+        const d = Math.min(1, Math.hypot(x, z) / Math.max(0.05, len));
+        c.copy(dark).lerp(mid, d * 0.8).lerp(tipC, Math.max(0, d - 0.65) * 1.6);
+        c.multiplyScalar(0.9 + r() * 0.18);
+        if (snow && py > y - 0.02) c.lerp(snowC, 0.55 + d * 0.35);
+      }));
     }
-    geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-    geo.computeVertexNormals();
-    // bias normals upward so the canopy catches light softly
-    const nrm = geo.getAttribute('normal');
-    for (let v = 0; v < nrm.count; v++) {
-      const n = new THREE.Vector3(nrm.getX(v), nrm.getY(v) + 0.6, nrm.getZ(v)).normalize();
-      nrm.setXYZ(v, n.x, n.y, n.z);
-    }
-    parts.push(geo);
+  }
+  // leader shoot on top
+  const top = new THREE.ConeGeometry(0.06, 0.22, 5);
+  top.translate(0, trunkH + 0.86, 0);
+  parts.push(colorize(top, (_x, _y, _z, c) => (snow ? c.copy(snowC) : c.copy(tipC))));
+  const g = mergeGeometries(parts);
+  g.computeVertexNormals();
+  return g;
+}
+
+function blob(radius: number, r: () => number, detail = 1): THREE.BufferGeometry {
+  const g = new THREE.IcosahedronGeometry(radius, detail);
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    const j = 0.82 + r() * 0.32;
+    pos.setXYZ(i, pos.getX(i) * j, pos.getY(i) * j * 0.85, pos.getZ(i) * j);
+  }
+  return g;
+}
+
+/** Broadleaf tree: trunk, a few branches and lumpy leaf clusters at their ends. ~1 unit tall. */
+export function makeLeafyGeometry(variant: number): THREE.BufferGeometry {
+  const r = seeded(variant * 104729 + 31);
+  const parts: THREE.BufferGeometry[] = [];
+  const bark = 0x5b3b24;
+  parts.push(paint(new THREE.CylinderGeometry(0.035, 0.065, 0.5, 6), bark, T(0, 0.25, 0)));
+  const leafA = new THREE.Color(0x3e7a2c), leafB = new THREE.Color(0x6aa43a), leafD = new THREE.Color(0x2a5520);
+  const clusters: [number, number, number, number][] = [[0, 0.72, 0, 0.26]];
+  const nb = 3 + Math.floor(r() * 2);
+  for (let i = 0; i < nb; i++) {
+    const a = (i / nb) * Math.PI * 2 + r() * 0.6;
+    const tilt = 0.6 + r() * 0.35, len = 0.28 + r() * 0.12;
+    const br = new THREE.CylinderGeometry(0.014, 0.028, len, 5);
+    br.translate(0, len / 2, 0);
+    br.rotateZ(-tilt);
+    br.rotateY(-a);
+    br.translate(0, 0.36 + r() * 0.1, 0);
+    parts.push(paint(br, bark));
+    const ex = Math.cos(a) * Math.sin(tilt) * len, ez = Math.sin(a) * Math.sin(tilt) * len, ey = 0.38 + Math.cos(tilt) * len + 0.08;
+    clusters.push([ex, ey + 0.1, ez, 0.17 + r() * 0.07]);
+  }
+  for (const [x, y, z, rad] of clusters) {
+    const b = blob(rad, r, 1);
+    b.translate(x, y, z);
+    parts.push(colorize(b, (_vx, vy, _vz, c) => {
+      const t = Math.max(0, Math.min(1, (vy - (y - rad)) / (rad * 2)));
+      c.copy(leafD).lerp(leafA, t).lerp(leafB, Math.max(0, t - 0.55) * 1.8);
+      c.multiplyScalar(0.9 + r() * 0.2);
+    }));
   }
   return mergeGeometries(parts);
 }
 
+/** Leafy bush made of a few lumpy clusters. */
 export function makeBushGeometry(variant: number): THREE.BufferGeometry {
   const r = seeded(variant * 104729 + 3);
   const parts: THREE.BufferGeometry[] = [];
+  const leafA = new THREE.Color(0x3f6f2a), leafB = new THREE.Color(0x6a9a3a), leafD = new THREE.Color(0x2a4f1e);
   const n = 3 + Math.floor(r() * 3);
   for (let i = 0; i < n; i++) {
-    const g = new THREE.IcosahedronGeometry(0.16 + r() * 0.1, 1);
-    const a = r() * Math.PI * 2, d = r() * 0.16;
-    parts.push(paint(g, [0x3f6f2a, 0x4f7f30, 0x5a8a36][Math.floor(r() * 3)], T(Math.cos(a) * d, 0.12 + r() * 0.08, Math.sin(a) * d)));
+    const a = r() * Math.PI * 2, d = r() * 0.16, rad = 0.13 + r() * 0.08;
+    const b = blob(rad, r, 1);
+    const cy = 0.1 + r() * 0.07;
+    b.translate(Math.cos(a) * d, cy, Math.sin(a) * d);
+    parts.push(colorize(b, (_x, y, _z, c) => {
+      const t = Math.max(0, Math.min(1, (y - cy + rad) / (rad * 2)));
+      c.copy(leafD).lerp(leafA, t).lerp(leafB, Math.max(0, t - 0.5) * 1.6).multiplyScalar(0.9 + r() * 0.2);
+    }));
   }
   return mergeGeometries(parts);
 }
 
 export const foliageMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
+/** Faceted shading reads as clumps of leaves on broadleaf trees and bushes. */
+export const leafMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, flatShading: true });

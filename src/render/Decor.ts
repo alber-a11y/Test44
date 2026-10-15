@@ -3,7 +3,7 @@ import { Assets } from './Assets';
 import { Field, PATH_HALF } from './Field';
 import { Rng } from '../sim/rng';
 import { fbm } from './glsl';
-import { makePineGeometry, makeBushGeometry, foliageMaterial } from './props';
+import { makePineGeometry, makeBushGeometry, makeLeafyGeometry, foliageMaterial, leafMaterial } from './props';
 
 export const KIT_SCALE = 2;
 
@@ -22,7 +22,7 @@ export class KitBatch {
     for (const [key, list] of this.items) {
       const custom = customGeometry(key);
       const geo = custom ?? Assets.geometry(key);
-      const im = new THREE.InstancedMesh(geo, custom ? foliageMaterial : Assets.kitMaterial, list.length);
+      const im = new THREE.InstancedMesh(geo, custom ? (key.startsWith('oak') || key.startsWith('bush') ? leafMaterial : foliageMaterial) : Assets.kitMaterial, list.length);
       const white = new THREE.Color(1, 1, 1);
       list.forEach((it, i) => { im.setMatrixAt(i, it.m); im.setColorAt(i, it.c ?? white); });
       im.castShadow = castShadow && (foliageShadows || (!custom && !key.startsWith('rock') && !key.startsWith('tree')));
@@ -35,13 +35,13 @@ export class KitBatch {
 }
 
 const customCache = new Map<string, THREE.BufferGeometry>();
-/** Procedural foliage keys: pine0..3, spine0..3 (snowy), bush0..2 */
+/** Procedural foliage keys: pine0..3, spine0..3 (snowy), oak0..3 (broadleaf), bush0..2 */
 function customGeometry(key: string): THREE.BufferGeometry | null {
-  if (!/^(pine|spine|bush)\d$/.test(key)) return null;
+  if (!/^(pine|spine|bush|oak)\d$/.test(key)) return null;
   let g = customCache.get(key);
   if (!g) {
     const v = +key.slice(-1);
-    g = key.startsWith('bush') ? makeBushGeometry(v) : makePineGeometry(v, key.startsWith('spine'));
+    g = key.startsWith('bush') ? makeBushGeometry(v) : key.startsWith('oak') ? makeLeafyGeometry(v) : makePineGeometry(v, key.startsWith('spine'));
     customCache.set(key, g);
   }
   return g;
@@ -131,7 +131,7 @@ export function buildDecor(field: Field, occupied: { x: number; z: number; r: nu
     if (field.pathDist(x, z) < PATH_HALF + 1.5 || !isFree(x, z, 1.2)) continue;
     const y = field.height(x, z);
     const key = rng.pick(treeKeys);
-    batch.add(key, x, y - 0.1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.4, 2.4) * (key.includes('pine') ? 1.3 : key.startsWith('bush') ? 1.6 : 1.25), tint);
+    batch.add(key, x, y - 0.1, z, rng.range(0, 6.28), KIT_SCALE * rng.range(1.4, 2.4) * (key.includes('pine') ? 1.3 : key.startsWith('bush') ? 1.6 : key.startsWith('oak') ? 1.45 : 1.25), tint);
     take(x, z, 1.2);
     i++;
   }
