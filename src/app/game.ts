@@ -290,8 +290,8 @@ export function closePause() {
   session?.resume('menu');
 }
 
-/** Open the shop or settings from the pause menu; the battle stays paused underneath. */
-export function openFromPause(target: 'shop' | 'settings') {
+/** Open the shop, forge or settings from the pause menu; the battle stays paused underneath. */
+export function openFromPause(target: 'shop' | 'forge' | 'settings') {
   modal.value = null;
   if (target === 'shop') shopTab.value = 'items';
   screen.value = target;
@@ -300,6 +300,8 @@ export function openFromPause(target: 'shop' | 'settings') {
 /** Back button of shop/forge/settings: return to the paused battle if one is running. */
 export function goBack() {
   if (session && session.world.result === 'none') {
+    session.world.applyUpgrades(profile.value.upgrades);
+    session.publishHud();
     screen.value = 'battle';
     modal.value = { type: 'pause' };
     return;

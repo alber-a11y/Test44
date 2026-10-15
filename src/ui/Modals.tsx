@@ -11,7 +11,7 @@ import { HERO_ORDER } from '../data/heroes';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { thumbs } from '../render/Thumbs';
 import { AdBtn, Btn, ModalFrame, Price, Stars } from './common';
-import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy, IcoShop, IcoGear, IcoAd } from './icons';
+import { IcoCoin, IcoStar, SPELL_ICONS, IcoTrophy, IcoShop, IcoGear, IcoAd, IcoHammer } from './icons';
 import { Audio } from '../audio/AudioManager';
 import { WheelModal } from './Wheel';
 
@@ -30,8 +30,9 @@ export function Modals() {
           <Btn class="big" onClick={closePause}>{t('resume')}</Btn>
           <div class="row" style={{ flexWrap: 'nowrap' }}>
             <Btn class="blue" style={{ flex: 1 }} onClick={() => openFromPause('shop')}><IcoShop size={26} />{t('shop')}</Btn>
-            <Btn class="gray" style={{ flex: 1 }} onClick={() => openFromPause('settings')}><IcoGear size={26} />{t('settings')}</Btn>
+            <Btn class="purple" style={{ flex: 1 }} onClick={() => openFromPause('forge')}><IcoHammer size={26} />{t('forge')}</Btn>
           </div>
+          <Btn class="gray" onClick={() => openFromPause('settings')}><IcoGear size={26} />{t('settings')}</Btn>
           <Btn class="gold" onClick={restartLevel}>{t('restart')}</Btn>
           <Btn class="red" onClick={exitToMap}>{t('exit')}</Btn>
         </div>

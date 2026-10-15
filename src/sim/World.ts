@@ -393,6 +393,19 @@ export class World {
 
   static FREE_CHARGES = 1;
 
+  /** Forge upgrades bought mid-battle (from the pause menu) take effect right away. */
+  applyUpgrades(upgrades: Record<string, number>) {
+    const gold0 = this.upg('gold'), lives0 = this.upg('lives'), hero0 = this.upg('hero');
+    this.loadout.upgrades = { ...upgrades };
+    this.gold += this.upg('gold') - gold0;
+    this.lives += this.upg('lives') - lives0;
+    const h = this.hero;
+    if (h && this.upg('hero') !== hero0) {
+      const k = (1 + this.upg('hero')) / (1 + hero0);
+      h.dmgMul *= k; h.maxHp *= k; h.hp *= k;
+    }
+  }
+
   /** Free charges + owned stock. */
   consumableCount(id: string) { return (this.freeCharges[id] ?? 0) + (this.consumables[id] ?? 0); }
 
