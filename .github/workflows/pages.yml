@@ -28,9 +28,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      - name: Zip build for game portals
+        run: cd dist && zip -qr ../hearthguard-web.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hearthguard-web
+          path: hearthguard-web.zip
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # Pages must be enabled once in Settings → Pages → Source: GitHub Actions.
+    # Until then the deploy step is allowed to fail without marking the run red.
+    continue-on-error: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
